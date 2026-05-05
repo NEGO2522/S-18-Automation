@@ -110,44 +110,54 @@ const StudentDashboard = () => {
         style: { fontFamily: 'inherit', fontSize: 14, borderRadius: 10, border: '0.5px solid #E5E3F8' }
       }} />
 
-      <div style={{ maxWidth: 780, margin: '0 auto', padding: '36px 20px 60px' }}>
+      <div style={{ maxWidth: 1140, margin: '0 auto', padding: '36px 24px 60px' }}>
 
         {/* Page Header */}
         <div style={{ marginBottom: 28 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 10,
-              background: PU_PURPLE_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }}>
-              <svg width="18" height="18" fill="none" stroke={PU_PURPLE} viewBox="0 0 24 24" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+          <div style={{
+            background: 'white', borderRadius: 16, padding: '24px',
+            border: '0.5px solid #E5E3F8', borderLeft: `4px solid ${PU_PURPLE}`,
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
+          }}>
+            <div>
+              <h1 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 700, color: '#1A1640', letterSpacing: '-0.3px' }}>
+                Welcome back, {user?.name || 'Student'} 👋
+              </h1>
+              <p style={{ margin: 0, fontSize: 13, color: '#7C7A9A' }}>
+                Submit your S18 form and track approvals in real-time
+              </p>
             </div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#1A1640', letterSpacing: '-0.3px' }}>
-              S18 Permission Form
-            </h1>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ background: '#EEEDFE', color: '#3C3489', padding: '8px 14px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>
+                Requests This Semester: {myRequests.length}
+              </div>
+              <div style={{ background: '#EAF3DE', color: '#3B6D11', padding: '8px 14px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>
+                Approved: {myRequests.filter(r => r.status === 'approved').length}
+              </div>
+            </div>
           </div>
-          <p style={{ margin: 0, fontSize: 13, color: '#7C7A9A', paddingLeft: 46 }}>
-            Students' Participation in Activities Outside Poornima University
-          </p>
         </div>
 
         {/* Tab Switcher */}
-        <div style={{
-          display: 'inline-flex', background: '#EEEDFE', borderRadius: 12,
-          padding: 4, marginBottom: 24, gap: 2
-        }}>
-          {[['new', 'New Request'], ['my-requests', 'My Requests']].map(([key, label]) => (
-            <button key={key} onClick={() => setActiveTab(key)} style={{
-              padding: '8px 20px', borderRadius: 9, border: 'none', cursor: 'pointer',
-              fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
-              background: activeTab === key ? PU_PURPLE : 'transparent',
-              color: activeTab === key ? '#fff' : '#534AB7',
-              boxShadow: activeTab === key ? '0 2px 8px rgba(60,52,137,0.25)' : 'none',
-            }}>
-              {label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <div style={{
+            display: 'inline-flex', background: '#EEEDFE', borderRadius: 12,
+            padding: 4, gap: 2
+          }}>
+            {[['new', 'New Request'], ['my-requests', `My Requests (${myRequests.length})`]].map(([key, label]) => (
+              <button key={key} onClick={() => setActiveTab(key)} style={{
+                padding: '8px 20px', borderRadius: 9, border: 'none', cursor: 'pointer',
+                fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
+                background: activeTab === key ? PU_PURPLE : 'transparent',
+                color: activeTab === key ? '#fff' : '#534AB7',
+                boxShadow: activeTab === key ? '0 2px 8px rgba(60,52,137,0.25)' : 'none',
+              }}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <span style={{ fontSize: 11, color: '#9895B5', fontWeight: 500 }}>Max 2 per semester</span>
         </div>
 
         {/* ── NEW REQUEST FORM ── */}
@@ -157,7 +167,7 @@ const StudentDashboard = () => {
 
               {/* Section: Student Details */}
               <Card>
-                <SectionHeader icon="👤" title="Student Details" />
+                <SectionHeader icon="01" title="Student Details" />
                 <Grid cols={2}>
                   <Field label="Student Name" required>
                     <Input name="studentName" value={formData.studentName} onChange={handleChange} placeholder="Full name" />
@@ -211,7 +221,7 @@ const StudentDashboard = () => {
 
               {/* Section: Activity Details */}
               <Card>
-                <SectionHeader icon="🏁" title="Activity Details" />
+                <SectionHeader icon="02" title="Activity Details" />
                 <Field label="Activity Name" required>
                   <Input name="activityName" value={formData.activityName} onChange={handleChange} placeholder="e.g. Smart India Hackathon 2025" />
                 </Field>
@@ -243,7 +253,7 @@ const StudentDashboard = () => {
 
               {/* Section: Team Members */}
               <Card>
-                <SectionHeader icon="👥" title="Team Members" />
+                <SectionHeader icon="03" title="Team Members" />
                 <Field label="Team members joining (excluding yourself)">
                   <Select name="numberOfTeamMembers" value={formData.numberOfTeamMembers} onChange={handleChange}>
                     <option value="0">Going alone</option>
@@ -278,26 +288,39 @@ const StudentDashboard = () => {
 
               {/* Section: Documents */}
               <Card>
-                <SectionHeader icon="📎" title="Documents" />
-                <p style={{ margin: '0 0 14px', fontSize: 13, color: '#7C7A9A' }}>
-                  Attach the required documents as per S18 guidelines. PDF or image files accepted.
-                </p>
+                <SectionHeader icon="04" title="Documents" />
+                <div style={{
+                  background: '#FFF8EC', color: '#854F0B', border: '0.5px solid #FAC775',
+                  borderRadius: 10, padding: '10px 14px', fontSize: 12.5, marginBottom: 14,
+                  display: 'flex', alignItems: 'center', gap: 8
+                }}>
+                  <span style={{ fontSize: 14 }}>⚠️</span> Sabhi 3 documents mandatory hain — form submit nahi hoga bina inke
+                </div>
                 <Grid cols={3}>
-                  <Field label="Event Brochure" required>
-                    <FileUploadBox name="brochureFile" file={formData.brochureFile} onChange={handleChange} accept=".pdf,image/*" />
-                  </Field>
-                  <Field label="Photo at Event Venue" hint="Student ki event mein li gayi photo" required>
-                    <FileUploadBox name="participantPhotoFile" file={formData.participantPhotoFile} onChange={handleChange} accept="image/*" />
-                  </Field>
-                  <Field label="Certificate" hint="Participation ya achievement certificate" required>
-                    <FileUploadBox name="certificateFile" file={formData.certificateFile} onChange={handleChange} accept=".pdf,image/*" />
-                  </Field>
+                  <div>
+                    <Field label="Event Brochure" required>
+                      <FileUploadBox name="brochureFile" file={formData.brochureFile} onChange={handleChange} accept=".pdf,image/*" />
+                    </Field>
+                    <p style={{ margin: '6px 0 0', fontSize: 11, color: '#9895B5', textAlign: 'center' }}>PDF ya image • Required</p>
+                  </div>
+                  <div>
+                    <Field label="Photo at Event Venue" required>
+                      <FileUploadBox name="participantPhotoFile" file={formData.participantPhotoFile} onChange={handleChange} accept="image/*" />
+                    </Field>
+                    <p style={{ margin: '6px 0 0', fontSize: 11, color: '#9895B5', textAlign: 'center' }}>Image only • Required • Event venue mein li gayi photo</p>
+                  </div>
+                  <div>
+                    <Field label="Certificate" required>
+                      <FileUploadBox name="certificateFile" file={formData.certificateFile} onChange={handleChange} accept=".pdf,image/*" />
+                    </Field>
+                    <p style={{ margin: '6px 0 0', fontSize: 11, color: '#9895B5', textAlign: 'center' }}>PDF ya image • Required</p>
+                  </div>
                 </Grid>
               </Card>
 
               {/* Section: Parent Info */}
               <Card>
-                <SectionHeader icon="📞" title="Parent / Guardian" />
+                <SectionHeader icon="05" title="Parent / Guardian" />
                 <Grid cols={2}>
                   <Field label="Parent Mobile No." required>
                     <Input name="parentMobileNo" value={formData.parentMobileNo} onChange={handleChange} placeholder="10-digit number" maxLength={10} />
@@ -314,7 +337,7 @@ const StudentDashboard = () => {
 
               {/* Section: Undertaking */}
               <Card>
-                <SectionHeader icon="📋" title="Student Undertaking" />
+                <SectionHeader icon="06" title="Student Undertaking" />
                 <div style={{
                   background: '#F7F6FD', borderRadius: 10,
                   border: '0.5px solid #CECBF6', padding: '16px 18px',
@@ -343,41 +366,53 @@ const StudentDashboard = () => {
               </Card>
 
               {/* Submit Button */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-                <button type="button" onClick={() => setActiveTab('my-requests')} style={{
-                  padding: '11px 22px', borderRadius: 10, border: '0.5px solid #CECBF6',
-                  background: 'white', color: '#534AB7', fontSize: 14, fontWeight: 600,
-                  cursor: 'pointer', transition: 'all 0.15s'
-                }}>
-                  Cancel
-                </button>
-                <button type="submit" disabled={loading} style={{
-                  padding: '11px 28px', borderRadius: 10, border: 'none',
-                  background: loading ? '#9895B5' : PU_PURPLE,
-                  color: '#fff', fontSize: 14, fontWeight: 600,
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.15s',
-                  boxShadow: loading ? 'none' : '0 4px 14px rgba(60,52,137,0.35)',
-                  display: 'flex', alignItems: 'center', gap: 8,
-                }}>
-                  {loading ? (
-                    <>
-                      <span style={{
-                        width: 14, height: 14, border: '2px solid rgba(255,255,255,0.4)',
-                        borderTopColor: '#fff', borderRadius: '50%',
-                        display: 'inline-block', animation: 'spin 0.6s linear infinite'
-                      }} />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                      Submit S18 Request
-                    </>
-                  )}
-                </button>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 16, fontSize: 12, fontWeight: 500 }}>
+                  <span style={{ color: formData.undertakingAgreed ? '#3B6D11' : '#9895B5', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    Undertaking agreed
+                  </span>
+                  <span style={{ color: (formData.brochureFile && formData.participantPhotoFile && formData.certificateFile) ? '#3B6D11' : '#9895B5', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    All documents uploaded
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <button type="button" onClick={() => setActiveTab('my-requests')} style={{
+                    padding: '11px 22px', borderRadius: 10, border: '0.5px solid #CECBF6',
+                    background: 'white', color: '#534AB7', fontSize: 14, fontWeight: 600,
+                    cursor: 'pointer', transition: 'all 0.15s'
+                  }}>
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={loading} style={{
+                    padding: '11px 28px', borderRadius: 10, border: 'none',
+                    background: loading ? '#9895B5' : PU_PURPLE,
+                    color: '#fff', fontSize: 14, fontWeight: 600,
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.15s',
+                    boxShadow: loading ? 'none' : '0 4px 14px rgba(60,52,137,0.35)',
+                    display: 'flex', alignItems: 'center', gap: 8,
+                  }}>
+                    {loading ? (
+                      <>
+                        <span style={{
+                          width: 14, height: 14, border: '2px solid rgba(255,255,255,0.4)',
+                          borderTopColor: '#fff', borderRadius: '50%',
+                          display: 'inline-block', animation: 'spin 0.6s linear infinite'
+                        }} />
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Submit S18 Request
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </form>
@@ -461,22 +496,38 @@ const StudentDashboard = () => {
                       </div>
 
                       <p style={{ margin: '0 0 10px', fontSize: 11, color: '#9895B5', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>Approval Chain</p>
-                      <div style={{ display: 'flex', gap: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         {[
                           ['Tutor', ['tutor_approved', 'hod_approved', 'approved']],
-                          ['HOD / Dy.HOD', ['hod_approved', 'approved']],
+                          ['HOD', ['hod_approved', 'approved']],
                           ['Chief Proctor', ['approved']],
-                        ].map(([role, doneStatuses]) => {
+                        ].map(([role, doneStatuses], stepIdx, arr) => {
                           const done = doneStatuses.includes(req.status);
+                          const isFirstPending = !done && (stepIdx === 0 || arr[stepIdx - 1][1].includes(req.status));
+                          const isActive = isFirstPending;
+                          
                           return (
-                            <div key={role} style={{
-                              flex: 1, padding: '8px 12px', borderRadius: 8, textAlign: 'center',
-                              background: done ? '#EAF3DE' : '#F7F6FD',
-                              border: `0.5px solid ${done ? '#C0DD97' : '#E5E3F8'}`,
-                            }}>
-                              <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: done ? '#3B6D11' : '#9895B5' }}>{role}</p>
-                              <p style={{ margin: '3px 0 0', fontSize: 11, color: done ? '#639922' : '#BDBBD4' }}>{done ? '✓ Approved' : 'Pending'}</p>
-                            </div>
+                            <React.Fragment key={role}>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: 80 }}>
+                                <div style={{
+                                  width: 28, height: 28, borderRadius: '50%',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  fontSize: 12, fontWeight: 'bold',
+                                  background: done ? '#3C3489' : (isActive ? 'white' : '#F7F6FD'),
+                                  color: done ? 'white' : (isActive ? '#3C3489' : '#9895B5'),
+                                  border: isActive ? '1.5px dashed #7F77DD' : 'none',
+                                  boxSizing: 'border-box'
+                                }}>
+                                  {done ? '✓' : stepIdx + 1}
+                                </div>
+                                <span style={{ fontSize: 11, fontWeight: 600, textAlign: 'center', color: done ? '#3B6D11' : (isActive ? '#3C3489' : '#9895B5') }}>
+                                  {role}
+                                </span>
+                              </div>
+                              {stepIdx < arr.length - 1 && (
+                                <div style={{ flex: 1, height: 2, background: done ? '#3C3489' : '#F0EEF8', margin: '0 8px', alignSelf: 'flex-start', marginTop: 14 }} />
+                              )}
+                            </React.Fragment>
                           );
                         })}
                       </div>
@@ -509,7 +560,13 @@ const Card = ({ children }) => (
 
 const SectionHeader = ({ icon, title }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-    <span style={{ fontSize: 16 }}>{icon}</span>
+    <div style={{
+      width: 24, height: 24, borderRadius: '50%', background: '#3C3489',
+      color: 'white', fontSize: 11, fontWeight: 'bold',
+      display: 'flex', alignItems: 'center', justifyContent: 'center'
+    }}>
+      {icon}
+    </div>
     <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#1A1640', letterSpacing: '-0.2px' }}>{title}</h3>
     <div style={{ flex: 1, height: '0.5px', background: '#EEECf8' }} />
   </div>

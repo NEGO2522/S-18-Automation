@@ -11,67 +11,129 @@ const Navbar = () => {
     navigate('/login');
   };
 
-  const getRoleBadgeClass = (role) => {
+  const getRoleConfig = (role) => {
     switch (role?.toLowerCase()) {
       case 'student':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
+        return { bg: 'rgba(59,130,246,0.15)', border: 'rgba(59,130,246,0.3)', text: '#93C5FD' };
       case 'tutor':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        return { bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.3)', text: '#6EE7B7' };
       case 'hod':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
+        return { bg: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.3)', text: '#FCD34D' };
       case 'chief_proctor':
-        return 'bg-purple-50 text-purple-700 border-purple-200';
+        return { bg: 'rgba(167,139,250,0.15)', border: 'rgba(167,139,250,0.3)', text: '#C4B5FD' };
       default:
-        return 'bg-gray-50 text-gray-700 border-gray-200';
+        return { bg: 'rgba(255,255,255,0.1)', border: 'rgba(255,255,255,0.2)', text: '#E5E7EB' };
     }
   };
 
+  const roleConfig = user ? getRoleConfig(user.role) : null;
+
   return (
-    <nav className="bg-white border-b border-gray-100 px-6 py-3 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] sticky top-0 z-50 w-full flex flex-row justify-between items-center">
-      {/* LEFT SIDE */}
-      <div className="flex flex-row gap-3.5 items-center">
+    <nav 
+      className="sticky top-0 w-full z-50 flex items-center justify-between px-6"
+      style={{
+        height: '60px',
+        background: 'rgba(15, 13, 35, 0.85)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+      }}
+    >
+      {/* LEFT SIDE — Branding */}
+      <div className="flex items-center">
         <img 
           src="https://upload.wikimedia.org/wikipedia/en/f/f4/Poornima_University.png" 
           alt="PU Logo" 
-          className="w-10 h-10 object-cover rounded-full border border-gray-100 shadow-sm"
+          className="object-cover rounded-full ring-1 ring-white/10"
+          style={{ width: 36, height: 36 }}
         />
-        <div className="flex flex-col">
-          <span className="font-extrabold text-gray-900 tracking-tight leading-tight text-lg">S18 Portal</span>
-          <span className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Poornima University</span>
+        
+        <div className="w-px mx-4" style={{ height: '28px', background: 'rgba(255,255,255,0.1)' }}></div>
+        
+        <div className="flex flex-col justify-center">
+          <span className="text-white font-bold leading-none mb-1" style={{ fontSize: '16px' }}>
+            S18 Portal
+          </span>
+          <span className="uppercase tracking-widest leading-none" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)' }}>
+            Poornima University
+          </span>
         </div>
       </div>
 
-      {/* RIGHT SIDE */}
-      <div className="flex flex-row items-center gap-5">
+      {/* CENTER — Role Badge */}
+      <div className="absolute left-1/2 transform -translate-x-1/2 hidden md:flex">
+        {user && user.role && (
+          <div 
+            className="flex items-center gap-2 rounded-full px-3 py-1"
+            style={{ 
+              background: roleConfig.bg, 
+              border: `1px solid ${roleConfig.border}` 
+            }}
+          >
+            <div 
+              className="w-1.5 h-1.5 rounded-full animate-pulse" 
+              style={{ background: roleConfig.text }}
+            ></div>
+            <span 
+              className="uppercase tracking-wider font-semibold"
+              style={{ fontSize: '11px', color: roleConfig.text }}
+            >
+              {user.role.replace('_', ' ')}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* RIGHT SIDE — User Info & Logout */}
+      <div className="flex items-center gap-4">
         {user && (
           <div className="flex items-center gap-3">
-            <div className="flex flex-col items-end">
-              <span className="text-sm font-bold text-gray-800 leading-tight">{user.name}</span>
-              {user.role && (
-                <span className={`mt-1 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border ${getRoleBadgeClass(user.role)}`}>
-                  {user.role.replace('_', ' ')}
-                </span>
-              )}
-            </div>
-            {/* User Avatar Placeholder */}
-            <div className="w-9 h-9 rounded-full bg-[#3C3489] text-white flex items-center justify-center font-bold text-sm shadow-sm ring-2 ring-white">
+            <span className="font-semibold hidden sm:inline-block" style={{ fontSize: '14px', color: 'rgba(255,255,255,0.8)' }}>
+              {user.name}
+            </span>
+            <div 
+              className="rounded-full flex items-center justify-center text-white font-bold text-sm"
+              style={{ 
+                width: 32, height: 32, 
+                background: 'rgba(255,255,255,0.1)', 
+                border: '1px solid rgba(255,255,255,0.15)' 
+              }}
+            >
               {user.name.charAt(0).toUpperCase()}
             </div>
           </div>
         )}
         
-        <div className="w-px h-8 bg-gray-200"></div>
-
         <button
           onClick={handleLogout}
-          className="text-sm font-semibold text-gray-500 hover:text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-2"
+          className="flex items-center justify-center rounded-full transition-all duration-200 group"
+          style={{ width: 28, height: 28 }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+            e.currentTarget.querySelector('svg').style.stroke = 'rgba(239,68,68,0.8)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.querySelector('svg').style.stroke = 'rgba(255,255,255,0.4)';
+          }}
+          title="Logout"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            width="15" 
+            height="15" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="rgba(255,255,255,0.4)" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+            style={{ transition: 'stroke 0.2s' }}
+          >
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
             <polyline points="16 17 21 12 16 7"></polyline>
             <line x1="21" y1="12" x2="9" y2="12"></line>
           </svg>
-          Logout
         </button>
       </div>
     </nav>
