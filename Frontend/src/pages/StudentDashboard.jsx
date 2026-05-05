@@ -1,14 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
-// import API from '../utils/api'; // Using fetch logic directly or mock for now as API may not be fully set up
 import toast, { Toaster } from 'react-hot-toast';
+
+const PU_PURPLE = '#3C3489';
+const PU_PURPLE_DARK = '#2A2362';
+const PU_PURPLE_LIGHT = '#EEEDFE';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('new'); // 'new' | 'my-requests'
+  const [activeTab, setActiveTab] = useState('new');
+  const [loading, setLoading] = useState(false);
+  const [myRequests, setMyRequests] = useState([]);
+  const [expandedReq, setExpandedReq] = useState(null);
 
-  // Form State
   const [formData, setFormData] = useState({
     studentName: user?.name || '',
     registrationNo: '',
@@ -17,317 +22,557 @@ const StudentDashboard = () => {
     branch: '',
     email: user?.email || '',
     mobileNo: '',
+    cumulativeAttendance: '',
+    lastParticipation: '',
     activityName: '',
     organizingInstitution: '',
     activityType: '',
     startDate: '',
     endDate: '',
+    numberOfTeamMembers: '0',
+    teamMembers: [
+      { name: '', registrationNo: '' },
+      { name: '', registrationNo: '' },
+      { name: '', registrationNo: '' },
+    ],
+    brochureFile: null,
+    participantPhotoFile: null,
+    certificateFile: null,
+    parentMobileNo: '',
+    undertakingAgreed: false,
   });
 
-  const [myRequests, setMyRequests] = useState([]);
-  const [loading, setLoading] = useState(false);
-
   useEffect(() => {
-    // If we switch to 'my-requests', we would fetch from the API here
-    if (activeTab === 'my-requests') {
-      fetchMyRequests();
-    }
+    if (activeTab === 'my-requests') fetchMyRequests();
   }, [activeTab]);
 
   const fetchMyRequests = async () => {
-    // Mocking fetch logic for now
-    // try {
-    //   const { data } = await API.get('/s18/my-requests');
-    //   setMyRequests(data);
-    // } catch (error) {
-    //   toast.error('Failed to fetch requests');
-    // }
+    // TODO: replace with actual API call
   };
 
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value, type, checked, files } = e.target;
+    if (type === 'checkbox') setFormData(p => ({ ...p, [name]: checked }));
+    else if (type === 'file') setFormData(p => ({ ...p, [name]: files[0] || null }));
+    else setFormData(p => ({ ...p, [name]: value }));
+  };
+
+  const handleTeamMemberChange = (idx, field, value) => {
+    const updated = formData.teamMembers.map((m, i) => i === idx ? { ...m, [field]: value } : m);
+    setFormData(p => ({ ...p, teamMembers: updated }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.brochureFile || !formData.participantPhotoFile || !formData.certificateFile) {
+      toast.error('Please upload all 3 required documents');
+      return;
+    }
+    if (Number(formData.cumulativeAttendance) < 75) {
+      toast.error('Cumulative attendance must be ≥ 75% to be eligible');
+      return;
+    }
+    if (!formData.undertakingAgreed) {
+      toast.error('You must agree to the student undertaking before submitting');
+      return;
+    }
     setLoading(true);
-    // Simulate API call
     setTimeout(() => {
       toast.success('S18 Request submitted successfully!');
       setLoading(false);
+      setMyRequests(prev => [{
+        activityName: formData.activityName,
+        organizingInstitution: formData.organizingInstitution,
+        activityType: formData.activityType,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        status: 'pending',
+        submittedAt: new Date().toLocaleDateString('en-IN'),
+      }, ...prev]);
       setActiveTab('my-requests');
-      // Adding it to mock list just for UI demonstration
-      setMyRequests([
-        { activityName: formData.activityName, status: 'Pending', date: new Date().toLocaleDateString() },
-        ...myRequests
-      ]);
-    }, 1000);
+    }, 1200);
+  };
+
+  const numMembers = Number(formData.numberOfTeamMembers);
+
+  const statusConfig = {
+    pending:        { label: 'Pending',         bg: '#FAEEDA', text: '#854F0B', dot: '#EF9F27' },
+    tutor_approved: { label: 'Tutor Approved',  bg: '#E6F1FB', text: '#185FA5', dot: '#378ADD' },
+    hod_approved:   { label: 'HOD Approved',    bg: '#EEEDFE', text: '#3C3489', dot: '#7F77DD' },
+    approved:       { label: 'Fully Approved',  bg: '#EAF3DE', text: '#3B6D11', dot: '#639922' },
+    rejected:       { label: 'Rejected',        bg: '#FCEBEB', text: '#A32D2D', dot: '#E24B4A' },
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div style={{ minHeight: '100vh', background: '#F7F6FD' }}>
       <Navbar />
-      <Toaster position="top-right" />
+      <Toaster position="top-right" toastOptions={{
+        style: { fontFamily: 'inherit', fontSize: 14, borderRadius: 10, border: '0.5px solid #E5E3F8' }
+      }} />
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* TABS */}
-        <div className="flex gap-6 border-b border-gray-200 mb-8">
-          <button
-            onClick={() => setActiveTab('new')}
-            className={`pb-3 font-semibold text-sm transition-colors ${
-              activeTab === 'new'
-                ? 'border-b-2 border-[#3C3489] text-[#3C3489]'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            New S18 Request
-          </button>
-          <button
-            onClick={() => setActiveTab('my-requests')}
-            className={`pb-3 font-semibold text-sm transition-colors ${
-              activeTab === 'my-requests'
-                ? 'border-b-2 border-[#3C3489] text-[#3C3489]'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            My Requests
-          </button>
+      <div style={{ maxWidth: 780, margin: '0 auto', padding: '36px 20px 60px' }}>
+
+        {/* Page Header */}
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: PU_PURPLE_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              <svg width="18" height="18" fill="none" stroke={PU_PURPLE} viewBox="0 0 24 24" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#1A1640', letterSpacing: '-0.3px' }}>
+              S18 Permission Form
+            </h1>
+          </div>
+          <p style={{ margin: 0, fontSize: 13, color: '#7C7A9A', paddingLeft: 46 }}>
+            Students' Participation in Activities Outside Poornima University
+          </p>
         </div>
 
-        {/* TAB CONTENT: NEW S18 REQUEST */}
+        {/* Tab Switcher */}
+        <div style={{
+          display: 'inline-flex', background: '#EEEDFE', borderRadius: 12,
+          padding: 4, marginBottom: 24, gap: 2
+        }}>
+          {[['new', 'New Request'], ['my-requests', 'My Requests']].map(([key, label]) => (
+            <button key={key} onClick={() => setActiveTab(key)} style={{
+              padding: '8px 20px', borderRadius: 9, border: 'none', cursor: 'pointer',
+              fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
+              background: activeTab === key ? PU_PURPLE : 'transparent',
+              color: activeTab === key ? '#fff' : '#534AB7',
+              boxShadow: activeTab === key ? '0 2px 8px rgba(60,52,137,0.25)' : 'none',
+            }}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── NEW REQUEST FORM ── */}
         {activeTab === 'new' && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* SECTION 1 — Student Details */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">
-                  Student Details
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Student Name</label>
-                    <input
-                      type="text"
-                      name="studentName"
-                      value={formData.studentName}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#3C3489]/50"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Registration No</label>
-                    <input
-                      type="text"
-                      name="registrationNo"
-                      value={formData.registrationNo}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#3C3489]/50"
-                      required
-                    />
-                  </div>
-                </div>
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Campus</label>
-                    <select
-                      name="campus"
-                      value={formData.campus}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#3C3489]/50 bg-white"
-                      required
-                    >
-                      <option value="">Select Campus</option>
-                      <option value="Poornima College of Engineering">Poornima College of Engineering</option>
-                      <option value="Poornima University Main Campus">Poornima University Main Campus</option>
-                      <option value="PIIT">PIIT</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
-                    <select
-                      name="year"
-                      value={formData.year}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#3C3489]/50 bg-white"
-                      required
-                    >
-                      <option value="">Select Year</option>
-                      <option value="1st Year">1st Year</option>
-                      <option value="2nd Year">2nd Year</option>
-                      <option value="3rd Year">3rd Year</option>
-                      <option value="4th Year">4th Year</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
-                    <select
-                      name="branch"
-                      value={formData.branch}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#3C3489]/50 bg-white"
-                      required
-                    >
-                      <option value="">Select Branch</option>
-                      <option value="Computer Science">Computer Science</option>
-                      <option value="Information Technology">Information Technology</option>
-                      <option value="Electronics">Electronics</option>
-                      <option value="Mechanical">Mechanical</option>
-                      <option value="Civil">Civil</option>
-                    </select>
-                  </div>
-                </div>
+              {/* Section: Student Details */}
+              <Card>
+                <SectionHeader icon="👤" title="Student Details" />
+                <Grid cols={2}>
+                  <Field label="Student Name" required>
+                    <Input name="studentName" value={formData.studentName} onChange={handleChange} placeholder="Full name" />
+                  </Field>
+                  <Field label="Registration No." required>
+                    <Input name="registrationNo" value={formData.registrationNo} onChange={handleChange} placeholder="e.g. 2021BTCS001" />
+                  </Field>
+                </Grid>
+                <Grid cols={3}>
+                  <Field label="Campus" required>
+                    <Select name="campus" value={formData.campus} onChange={handleChange}>
+                      <option value="">Select campus</option>
+                      <option>Poornima College of Engineering</option>
+                      <option>Poornima University Main Campus</option>
+                      <option>PIIT</option>
+                    </Select>
+                  </Field>
+                  <Field label="Year" required>
+                    <Select name="year" value={formData.year} onChange={handleChange}>
+                      <option value="">Select year</option>
+                      <option>1st Year</option><option>2nd Year</option>
+                      <option>3rd Year</option><option>4th Year</option>
+                    </Select>
+                  </Field>
+                  <Field label="Branch" required>
+                    <Select name="branch" value={formData.branch} onChange={handleChange}>
+                      <option value="">Select branch</option>
+                      <option>Computer Science</option><option>Information Technology</option>
+                      <option>Electronics</option><option>Mechanical</option><option>Civil</option>
+                    </Select>
+                  </Field>
+                </Grid>
+                <Grid cols={2}>
+                  <Field label="Poornima Email">
+                    <Input name="email" value={formData.email} readOnly style={{ background: '#F7F6FD', color: '#9895B5', cursor: 'not-allowed' }} />
+                  </Field>
+                  <Field label="Mobile No." required>
+                    <Input name="mobileNo" value={formData.mobileNo} onChange={handleChange} placeholder="10-digit number" maxLength={10} />
+                  </Field>
+                </Grid>
+                <Grid cols={2}>
+                  <Field label="Cumulative Attendance (%)" required hint="Must be ≥ 75% to be eligible">
+                    <Input name="cumulativeAttendance" type="number" min="0" max="100"
+                      value={formData.cumulativeAttendance} onChange={handleChange} placeholder="e.g. 82" />
+                  </Field>
+                  <Field label="Last Participation Date (this semester)">
+                    <Input name="lastParticipation" type="date" value={formData.lastParticipation} onChange={handleChange} />
+                  </Field>
+                </Grid>
+              </Card>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#3C3489]/50 bg-gray-50"
-                      readOnly
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Mobile No</label>
-                    <input
-                      type="text"
-                      name="mobileNo"
-                      value={formData.mobileNo}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#3C3489]/50"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 2 — Activity Details */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">
-                  Activity Details
-                </h3>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Activity Name</label>
-                  <input
-                    type="text"
-                    name="activityName"
-                    value={formData.activityName}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#3C3489]/50"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Organizing Institution</label>
-                    <input
-                      type="text"
-                      name="organizingInstitution"
-                      value={formData.organizingInstitution}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#3C3489]/50"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Activity Type</label>
-                    <select
-                      name="activityType"
-                      value={formData.activityType}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#3C3489]/50 bg-white"
-                      required
-                    >
-                      <option value="">Select Type</option>
-                      <option value="Workshop">Workshop</option>
+              {/* Section: Activity Details */}
+              <Card>
+                <SectionHeader icon="🏁" title="Activity Details" />
+                <Field label="Activity Name" required>
+                  <Input name="activityName" value={formData.activityName} onChange={handleChange} placeholder="e.g. Smart India Hackathon 2025" />
+                </Field>
+                <Grid cols={2}>
+                  <Field label="Organizing Institution" required>
+                    <Input name="organizingInstitution" value={formData.organizingInstitution} onChange={handleChange} placeholder="Institution name" />
+                  </Field>
+                  <Field label="Activity Type" required>
+                    <Select name="activityType" value={formData.activityType} onChange={handleChange}>
+                      <option value="">Select type</option>
                       <option value="Hackathon">Hackathon</option>
-                      <option value="Conference">Conference</option>
-                      <option value="Seminar">Seminar</option>
+                      <option value="Technical Competition">Technical Competition</option>
+                      <option value="Workshop/Seminar">Workshop / Seminar</option>
+                      <option value="Cultural Event">Cultural Event</option>
                       <option value="Sports">Sports</option>
                       <option value="Other">Other</option>
-                    </select>
+                    </Select>
+                  </Field>
+                </Grid>
+                <Grid cols={2}>
+                  <Field label="From Date" required>
+                    <Input name="startDate" type="date" value={formData.startDate} onChange={handleChange} />
+                  </Field>
+                  <Field label="To Date" required>
+                    <Input name="endDate" type="date" value={formData.endDate} onChange={handleChange} />
+                  </Field>
+                </Grid>
+              </Card>
+
+              {/* Section: Team Members */}
+              <Card>
+                <SectionHeader icon="👥" title="Team Members" />
+                <Field label="Team members joining (excluding yourself)">
+                  <Select name="numberOfTeamMembers" value={formData.numberOfTeamMembers} onChange={handleChange}>
+                    <option value="0">Going alone</option>
+                    <option value="1">1 member</option>
+                    <option value="2">2 members</option>
+                    <option value="3">3 members</option>
+                  </Select>
+                </Field>
+                {numMembers > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
+                    {Array.from({ length: numMembers }).map((_, i) => (
+                      <div key={i} style={{
+                        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12,
+                        background: '#F7F6FD', borderRadius: 10,
+                        border: '0.5px solid #E5E3F8', padding: '14px 16px'
+                      }}>
+                        <Field label={`Member ${i + 1} — Name`}>
+                          <Input value={formData.teamMembers[i].name}
+                            onChange={e => handleTeamMemberChange(i, 'name', e.target.value)}
+                            placeholder="Full name" />
+                        </Field>
+                        <Field label="Registration No.">
+                          <Input value={formData.teamMembers[i].registrationNo}
+                            onChange={e => handleTeamMemberChange(i, 'registrationNo', e.target.value)}
+                            placeholder="Reg. no." />
+                        </Field>
+                      </div>
+                    ))}
                   </div>
+                )}
+              </Card>
+
+              {/* Section: Documents */}
+              <Card>
+                <SectionHeader icon="📎" title="Documents" />
+                <p style={{ margin: '0 0 14px', fontSize: 13, color: '#7C7A9A' }}>
+                  Attach the required documents as per S18 guidelines. PDF or image files accepted.
+                </p>
+                <Grid cols={3}>
+                  <Field label="Event Brochure" required>
+                    <FileUploadBox name="brochureFile" file={formData.brochureFile} onChange={handleChange} accept=".pdf,image/*" />
+                  </Field>
+                  <Field label="Photo at Event Venue" hint="Student ki event mein li gayi photo" required>
+                    <FileUploadBox name="participantPhotoFile" file={formData.participantPhotoFile} onChange={handleChange} accept="image/*" />
+                  </Field>
+                  <Field label="Certificate" hint="Participation ya achievement certificate" required>
+                    <FileUploadBox name="certificateFile" file={formData.certificateFile} onChange={handleChange} accept=".pdf,image/*" />
+                  </Field>
+                </Grid>
+              </Card>
+
+              {/* Section: Parent Info */}
+              <Card>
+                <SectionHeader icon="📞" title="Parent / Guardian" />
+                <Grid cols={2}>
+                  <Field label="Parent Mobile No." required>
+                    <Input name="parentMobileNo" value={formData.parentMobileNo} onChange={handleChange} placeholder="10-digit number" maxLength={10} />
+                  </Field>
+                </Grid>
+                <div style={{
+                  marginTop: 12, background: '#FFF8EC', borderRadius: 10,
+                  border: '0.5px solid #FAC775', padding: '12px 16px',
+                  fontSize: 13, color: '#854F0B', lineHeight: 1.6
+                }}>
+                  <strong>Note:</strong> Written parent permission is required. Tutor will contact the parent directly if written consent is not received before the activity date.
+                </div>
+              </Card>
+
+              {/* Section: Undertaking */}
+              <Card>
+                <SectionHeader icon="📋" title="Student Undertaking" />
+                <div style={{
+                  background: '#F7F6FD', borderRadius: 10,
+                  border: '0.5px solid #CECBF6', padding: '16px 18px',
+                  fontSize: 13.5, color: '#3C3A5E', lineHeight: 1.8, marginBottom: 16
+                }}>
+                  I, <strong>{formData.studentName || '___________'}</strong> (Reg. No.: <strong>{formData.registrationNo || '___________'}</strong>), undertake the responsibility of my active participation in the above activity. I also affirm that I, along with my team members, will not indulge in any activity which will harm the prestige of Poornima University, and I will remain disciplined throughout.
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                    <input
-                      type="date"
-                      name="startDate"
-                      value={formData.startDate}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#3C3489]/50"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                    <input
-                      type="date"
-                      name="endDate"
-                      value={formData.endDate}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#3C3489]/50"
-                      required
-                    />
-                  </div>
+                {/* Guidelines reminder */}
+                <div style={{
+                  background: '#FCEBEB', borderRadius: 10,
+                  border: '0.5px solid #F7C1C1', padding: '12px 16px',
+                  fontSize: 12.5, color: '#A32D2D', lineHeight: 1.7, marginBottom: 16
+                }}>
+                  <strong>Guidelines:</strong> Max 2 participations per semester · Attendance must be ≥ 75% · Only institutions listed by Chief Proctor · Post-participation report mandatory (hard copy to HOD + email to pic@poornima.org)
                 </div>
-              </div>
+
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer' }}>
+                  <input type="checkbox" name="undertakingAgreed" checked={formData.undertakingAgreed}
+                    onChange={handleChange}
+                    style={{ width: 16, height: 16, marginTop: 2, accentColor: PU_PURPLE, cursor: 'pointer', flexShrink: 0 }} />
+                  <span style={{ fontSize: 13.5, color: '#3C3A5E', lineHeight: 1.6 }}>
+                    I have read and agree to the undertaking above and all guidelines set by Poornima University for participation in outside activities.
+                  </span>
+                </label>
+              </Card>
 
               {/* Submit Button */}
-              <div className="flex justify-end pt-4">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-[#3C3489] text-white px-8 py-2.5 rounded-lg font-medium hover:bg-[#2A2362] transition disabled:opacity-70"
-                >
-                  {loading ? 'Submitting...' : 'Submit Request'}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                <button type="button" onClick={() => setActiveTab('my-requests')} style={{
+                  padding: '11px 22px', borderRadius: 10, border: '0.5px solid #CECBF6',
+                  background: 'white', color: '#534AB7', fontSize: 14, fontWeight: 600,
+                  cursor: 'pointer', transition: 'all 0.15s'
+                }}>
+                  Cancel
+                </button>
+                <button type="submit" disabled={loading} style={{
+                  padding: '11px 28px', borderRadius: 10, border: 'none',
+                  background: loading ? '#9895B5' : PU_PURPLE,
+                  color: '#fff', fontSize: 14, fontWeight: 600,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s',
+                  boxShadow: loading ? 'none' : '0 4px 14px rgba(60,52,137,0.35)',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                }}>
+                  {loading ? (
+                    <>
+                      <span style={{
+                        width: 14, height: 14, border: '2px solid rgba(255,255,255,0.4)',
+                        borderTopColor: '#fff', borderRadius: '50%',
+                        display: 'inline-block', animation: 'spin 0.6s linear infinite'
+                      }} />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Submit S18 Request
+                    </>
+                  )}
                 </button>
               </div>
-            </form>
-          </div>
+            </div>
+          </form>
         )}
 
-        {/* TAB CONTENT: MY REQUESTS */}
+        {/* ── MY REQUESTS ── */}
         {activeTab === 'my-requests' && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">My S18 Requests</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {myRequests.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-gray-400 mb-2">
-                  <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <div style={{
+                background: 'white', borderRadius: 16, border: '0.5px solid #E5E3F8',
+                padding: '60px 20px', textAlign: 'center'
+              }}>
+                <div style={{
+                  width: 52, height: 52, borderRadius: 14, background: PU_PURPLE_LIGHT,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px'
+                }}>
+                  <svg width="24" height="24" fill="none" stroke={PU_PURPLE} viewBox="0 0 24 24" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <p className="text-gray-500">You have not submitted any S18 requests yet.</p>
+                <p style={{ margin: '0 0 6px', fontWeight: 600, color: '#1A1640', fontSize: 15 }}>No requests yet</p>
+                <p style={{ margin: '0 0 20px', fontSize: 13, color: '#9895B5' }}>Submit your first S18 form to get started</p>
+                <button onClick={() => setActiveTab('new')} style={{
+                  padding: '10px 22px', borderRadius: 10, border: 'none',
+                  background: PU_PURPLE, color: '#fff', fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', boxShadow: '0 4px 14px rgba(60,52,137,0.3)'
+                }}>
+                  + New Request
+                </button>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {myRequests.map((req, idx) => (
-                  <div key={idx} className="border border-gray-100 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:shadow-sm transition-shadow">
-                    <div>
-                      <h4 className="font-semibold text-gray-800">{req.activityName}</h4>
-                      <p className="text-sm text-gray-500 mt-1">Submitted on {req.date}</p>
+            ) : myRequests.map((req, idx) => {
+              const cfg = statusConfig[req.status] || statusConfig.pending;
+              const isOpen = expandedReq === idx;
+              return (
+                <div key={idx} style={{
+                  background: 'white', borderRadius: 14, border: '0.5px solid #E5E3F8',
+                  overflow: 'hidden', transition: 'box-shadow 0.15s'
+                }}>
+                  <div onClick={() => setExpandedReq(isOpen ? null : idx)} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '16px 20px', cursor: 'pointer'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                      <div style={{
+                        width: 8, height: 8, borderRadius: '50%', background: cfg.dot, flexShrink: 0
+                      }} />
+                      <div>
+                        <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: '#1A1640' }}>{req.activityName}</p>
+                        <p style={{ margin: '3px 0 0', fontSize: 12, color: '#9895B5' }}>
+                          {req.organizingInstitution} · {req.activityType}
+                        </p>
+                      </div>
                     </div>
-                    <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1.5 rounded-full">
-                      {req.status}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span style={{
+                        padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+                        background: cfg.bg, color: cfg.text
+                      }}>
+                        {cfg.label}
+                      </span>
+                      <svg width="14" height="14" fill="none" stroke="#9895B5" viewBox="0 0 24 24" strokeWidth="2"
+                        style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s', flexShrink: 0 }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
+
+                  {isOpen && (
+                    <div style={{ borderTop: '0.5px solid #F0EEF8', padding: '16px 20px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px', marginBottom: 18 }}>
+                        {[
+                          ['Dates', req.startDate && req.endDate ? `${req.startDate} → ${req.endDate}` : '—'],
+                          ['Submitted', req.submittedAt || '—'],
+                        ].map(([l, v]) => (
+                          <div key={l}>
+                            <p style={{ margin: '0 0 2px', fontSize: 11, color: '#9895B5', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>{l}</p>
+                            <p style={{ margin: 0, fontSize: 13, color: '#3C3A5E', fontWeight: 500 }}>{v}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      <p style={{ margin: '0 0 10px', fontSize: 11, color: '#9895B5', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>Approval Chain</p>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {[
+                          ['Tutor', ['tutor_approved', 'hod_approved', 'approved']],
+                          ['HOD / Dy.HOD', ['hod_approved', 'approved']],
+                          ['Chief Proctor', ['approved']],
+                        ].map(([role, doneStatuses]) => {
+                          const done = doneStatuses.includes(req.status);
+                          return (
+                            <div key={role} style={{
+                              flex: 1, padding: '8px 12px', borderRadius: 8, textAlign: 'center',
+                              background: done ? '#EAF3DE' : '#F7F6FD',
+                              border: `0.5px solid ${done ? '#C0DD97' : '#E5E3F8'}`,
+                            }}>
+                              <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: done ? '#3B6D11' : '#9895B5' }}>{role}</p>
+                              <p style={{ margin: '3px 0 0', fontSize: 11, color: done ? '#639922' : '#BDBBD4' }}>{done ? '✓ Approved' : 'Pending'}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };
+
+// ── Sub-components ──
+
+const Card = ({ children }) => (
+  <div style={{
+    background: 'white', borderRadius: 16,
+    border: '0.5px solid #E5E3F8',
+    padding: '24px 24px 20px',
+    display: 'flex', flexDirection: 'column', gap: 16
+  }}>
+    {children}
+  </div>
+);
+
+const SectionHeader = ({ icon, title }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+    <span style={{ fontSize: 16 }}>{icon}</span>
+    <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#1A1640', letterSpacing: '-0.2px' }}>{title}</h3>
+    <div style={{ flex: 1, height: '0.5px', background: '#EEECf8' }} />
+  </div>
+);
+
+const Grid = ({ cols, children }) => (
+  <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 14 }}>
+    {children}
+  </div>
+);
+
+const Field = ({ label, required, hint, children }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+    <label style={{ fontSize: 13, fontWeight: 600, color: '#4A4870' }}>
+      {label}{required && <span style={{ color: '#E24B4A', marginLeft: 3 }}>*</span>}
+    </label>
+    {children}
+    {hint && <p style={{ margin: 0, fontSize: 11.5, color: '#9895B5' }}>{hint}</p>}
+  </div>
+);
+
+const baseInputStyle = {
+  width: '100%', padding: '9px 12px', borderRadius: 9, fontSize: 13.5,
+  border: '0.5px solid #D0CEF0', outline: 'none', background: 'white',
+  color: '#1A1640', transition: 'border-color 0.15s', boxSizing: 'border-box',
+  fontFamily: 'inherit',
+};
+
+const Input = ({ style, ...props }) => (
+  <input
+    {...props}
+    style={{ ...baseInputStyle, ...style }}
+    onFocus={e => e.target.style.borderColor = '#3C3489'}
+    onBlur={e => e.target.style.borderColor = '#D0CEF0'}
+  />
+);
+
+const Select = ({ children, ...props }) => (
+  <select
+    {...props}
+    style={{ ...baseInputStyle, appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239895B5' stroke-width='2'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: 32 }}
+    onFocus={e => e.target.style.borderColor = '#3C3489'}
+    onBlur={e => e.target.style.borderColor = '#D0CEF0'}
+  >
+    {children}
+  </select>
+);
+
+const FileUploadBox = ({ name, file, onChange, accept = ".pdf,image/*" }) => (
+  <label style={{
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+    gap: 8, padding: '18px 12px', borderRadius: 10, cursor: 'pointer',
+    border: `1.5px dashed ${file ? '#7F77DD' : '#D0CEF0'}`,
+    background: file ? '#EEEDFE' : '#FAFAFA', transition: 'all 0.15s', textAlign: 'center'
+  }}>
+    <svg width="20" height="20" fill="none" stroke={file ? '#534AB7' : '#9895B5'} viewBox="0 0 24 24" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+    </svg>
+    <span style={{ fontSize: 12.5, color: file ? '#534AB7' : '#9895B5', fontWeight: file ? 600 : 400, wordBreak: 'break-all' }}>
+      {file ? file.name : 'Click to upload'}
+    </span>
+    <input type="file" name={name} onChange={onChange} accept={accept} style={{ display: 'none' }} />
+  </label>
+);
 
 export default StudentDashboard;

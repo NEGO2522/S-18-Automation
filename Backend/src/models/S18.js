@@ -30,9 +30,10 @@ const s18Schema = new mongoose.Schema({
     registrationNo: String
   }],
 
-  // Documents
-  brochureLink: { type: String },
-  activityDetailsLink: { type: String },
+  // Documents (all 3 mandatory)
+  participantPhotoLink: { type: String, required: true },   // Photo at the event venue
+  certificateLink:      { type: String, required: true },   // Participation/achievement certificate
+  brochureLink:         { type: String, required: true },   // Program brochure
 
   // Parent Consent
   parentConsentReceived: { type: Boolean, default: false },

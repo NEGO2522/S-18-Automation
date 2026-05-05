@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
+const User = require('../models/User');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE });
@@ -41,4 +42,41 @@ const getMe = async (req, res) => {
   res.json(req.user);
 };
 
-module.exports = { googleAuth, googleCallback, getMe };
+const register = async (req, res) => {
+  try {
+    const { name, email, mobile, department, role, password } = req.body;
+    
+    // Domain validation
+    if (!email.endsWith('@poornima.edu.in')) {
+      return res.status(400).json({ message: 'Only @poornima.edu.in accounts are allowed.' });
+    }
+
+    // Role check
+    if (!['tutor', 'hod', 'chief_proctor'].includes(role)) {
+      return res.status(400).json({ message: 'Invalid role for registration.' });
+    }
+
+    // Check if user exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already registered.' });
+    }
+
+    // Create user
+    const user = await User.create({
+      name,
+      email,
+      mobileNo: mobile,
+      department,
+      role,
+      password // Hook will hash it
+    });
+
+    res.status(201).json({ message: 'User registered successfully.' });
+  } catch (error) {
+    console.error('Registration Error:', error);
+    res.status(500).json({ message: 'Server error. Please try again later.' });
+  }
+};
+
+module.exports = { googleAuth, googleCallback, getMe, register };

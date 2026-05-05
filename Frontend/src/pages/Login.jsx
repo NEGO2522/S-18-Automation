@@ -191,13 +191,21 @@ function Login() {
               Continue with Google
             </button>
 
-            {/* Domain note */}
             <div className="mt-6 text-center">
               <p className="text-xs" style={{ color: 'rgba(255,255,255,0.22)' }}>
                 Restricted to{' '}
                 <span style={{ color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>
                   @poornima.edu.in
                 </span>
+              </p>
+            </div>
+
+            <div className="mt-6 text-center border-t border-white/10 pt-5">
+              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                New staff member?{' '}
+                <a href="/register" className="font-semibold text-white hover:underline">
+                  Register here
+                </a>
               </p>
             </div>
           </div>
