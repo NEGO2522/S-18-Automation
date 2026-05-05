@@ -346,14 +346,7 @@ const StudentDashboard = () => {
                   I, <strong>{formData.studentName || '___________'}</strong> (Reg. No.: <strong>{formData.registrationNo || '___________'}</strong>), undertake the responsibility of my active participation in the above activity. I also affirm that I, along with my team members, will not indulge in any activity which will harm the prestige of Poornima University, and I will remain disciplined throughout.
                 </div>
 
-                {/* Guidelines reminder */}
-                <div style={{
-                  background: '#FCEBEB', borderRadius: 10,
-                  border: '0.5px solid #F7C1C1', padding: '12px 16px',
-                  fontSize: 12.5, color: '#A32D2D', lineHeight: 1.7, marginBottom: 16
-                }}>
-                  <strong>Guidelines:</strong> Max 2 participations per semester · Attendance must be ≥ 75% · Only institutions listed by Chief Proctor · Post-participation report mandatory (hard copy to HOD + email to pic@poornima.org)
-                </div>
+
 
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer' }}>
                   <input type="checkbox" name="undertakingAgreed" checked={formData.undertakingAgreed}
