@@ -30,7 +30,7 @@ const Navbar = () => {
 
   return (
     <nav 
-      className="sticky top-0 w-full z-50 flex items-center justify-between px-6"
+      className="sticky top-0 w-[96%] max-w-[1140px] mx-auto z-50 flex items-center justify-between px-6 rounded-b-3xl"
       style={{
         height: '60px',
         background: 'rgba(15, 13, 35, 0.85)',
