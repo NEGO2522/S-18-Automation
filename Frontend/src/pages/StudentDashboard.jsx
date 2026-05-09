@@ -112,33 +112,6 @@ const StudentDashboard = () => {
 
       <div style={{ maxWidth: 1140, margin: '0 auto', padding: '36px 24px 60px' }}>
 
-        {/* Page Header */}
-        <div style={{ marginBottom: 28 }}>
-          <div style={{
-            background: 'white', borderRadius: 16, padding: '24px',
-            border: '0.5px solid #E5E3F8', borderLeft: `4px solid ${PU_PURPLE}`,
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
-          }}>
-            <div>
-              <h1 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 700, color: '#1A1640', letterSpacing: '-0.3px' }}>
-                Welcome back, {user?.name || 'Student'} 👋
-              </h1>
-              <p style={{ margin: 0, fontSize: 13, color: '#7C7A9A' }}>
-                Submit your S18 form and track approvals in real-time
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <div style={{ background: '#EEEDFE', color: '#3C3489', padding: '8px 14px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>
-                Requests This Semester: {myRequests.length}
-              </div>
-              <div style={{ background: '#EAF3DE', color: '#3B6D11', padding: '8px 14px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>
-                Approved: {myRequests.filter(r => r.status === 'approved').length}
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Tab Switcher */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <div style={{
@@ -346,8 +319,6 @@ const StudentDashboard = () => {
                   I, <strong>{formData.studentName || '___________'}</strong> (Reg. No.: <strong>{formData.registrationNo || '___________'}</strong>), undertake the responsibility of my active participation in the above activity. I also affirm that I, along with my team members, will not indulge in any activity which will harm the prestige of Poornima University, and I will remain disciplined throughout.
                 </div>
 
-
-
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer' }}>
                   <input type="checkbox" name="undertakingAgreed" checked={formData.undertakingAgreed}
                     onChange={handleChange}
@@ -498,7 +469,7 @@ const StudentDashboard = () => {
                           const done = doneStatuses.includes(req.status);
                           const isFirstPending = !done && (stepIdx === 0 || arr[stepIdx - 1][1].includes(req.status));
                           const isActive = isFirstPending;
-                          
+
                           return (
                             <React.Fragment key={role}>
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: 80 }}>
