@@ -1,4 +1,6 @@
-import { useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const LOGO = 'https://upload.wikimedia.org/wikipedia/en/f/f4/Poornima_University.png';
 
@@ -14,21 +16,58 @@ const GoogleIcon = () => (
 const BG2 = 'https://content.jdmagicbox.com/comp/jaipur/g3/0141px141.x141.230201230302.m1g3/catalogue/school-of-design-and-arts-poornima-university-vidhani-jaipur-colleges-0hpavyad5r.jpg';
 const BG1 = 'https://poornima.edu.in/assets/images/Online_meta.png';
 
-const LogoFallback = ({ size = 36 }) => (
-  <div style={{
-    width: size, height: size,
-    background: '#3C3489', borderRadius: 10,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontWeight: 700, fontSize: size * 0.36, color: 'white',
-  }}>PU</div>
-);
-
 function Login() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
   const error = searchParams.get('error');
+
+  // Staff login state
+  const [showStaffLogin, setShowStaffLogin] = useState(false);
+  const [staffEmail, setStaffEmail] = useState('');
+  const [staffPassword, setStaffPassword] = useState('');
+  const [staffError, setStaffError] = useState('');
+  const [staffLoading, setStaffLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleGoogleLogin = () => {
     window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
+  };
+
+  const handleStaffLogin = async (e) => {
+    e.preventDefault();
+    setStaffError('');
+    setStaffLoading(true);
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/staff-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: staffEmail, password: staffPassword }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setStaffError(data.message || 'Login failed. Please try again.');
+        setStaffLoading(false);
+        return;
+      }
+
+      login(data.user, data.token);
+
+      const routes = {
+        tutor: '/dashboard/tutor',
+        hod: '/dashboard/hod',
+        chief_proctor: '/dashboard/proctor',
+      };
+
+      navigate(routes[data.user.role] || '/login', { replace: true });
+    } catch {
+      setStaffError('Network error. Please try again.');
+      setStaffLoading(false);
+    }
   };
 
   return (
@@ -141,15 +180,17 @@ function Login() {
             {/* Heading */}
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold mb-2" style={{ color: 'rgba(255,255,255,0.95)' }}>
-                Welcome Back
+                {showStaffLogin ? 'Staff Login' : 'Welcome Back'}
               </h2>
               <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                Sign in with your university account
+                {showStaffLogin
+                  ? 'HOD / Tutor / Chief Proctor'
+                  : 'Sign in with your university account'}
               </p>
             </div>
 
-            {/* Error */}
-            {error && (
+            {/* URL-level error (Google OAuth errors) */}
+            {error && !showStaffLogin && (
               <div
                 className="rounded-xl p-4 mb-6 flex items-start gap-3 text-sm"
                 style={{
@@ -169,45 +210,199 @@ function Login() {
               </div>
             )}
 
-            {/* Google Button */}
-            <button
-              onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl font-medium transition-all duration-150 focus:outline-none"
-              style={{
-                background: 'rgba(255,255,255,0.09)',
-                border: '1px solid rgba(255,255,255,0.16)',
-                color: 'rgba(255,255,255,0.88)',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.26)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.09)';
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.16)';
-              }}
-            >
-              <GoogleIcon />
-              Continue with Google
-            </button>
+            {/* ── STUDENT VIEW: Google login ── */}
+            {!showStaffLogin && (
+              <>
+                <button
+                  onClick={handleGoogleLogin}
+                  className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl font-medium transition-all duration-150 focus:outline-none"
+                  style={{
+                    background: 'rgba(255,255,255,0.09)',
+                    border: '1px solid rgba(255,255,255,0.16)',
+                    color: 'rgba(255,255,255,0.88)',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.26)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.09)';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.16)';
+                  }}
+                >
+                  <GoogleIcon />
+                  Continue with Google
+                </button>
 
-            <div className="mt-6 text-center">
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.22)' }}>
-                Restricted to{' '}
-                <span style={{ color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>
-                  @poornima.edu.in
-                </span>
-              </p>
-            </div>
+                <div className="mt-4 text-center">
+                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.22)' }}>
+                    Restricted to{' '}
+                    <span style={{ color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>
+                      @poornima.edu.in
+                    </span>
+                  </p>
+                </div>
 
-            <div className="mt-6 text-center border-t border-white/10 pt-5">
-              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                New staff member?{' '}
-                <a href="/register" className="font-semibold text-white hover:underline">
-                  Register here
-                </a>
-              </p>
-            </div>
+                {/* Divider */}
+                <div className="flex items-center gap-3 my-6">
+                  <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.10)' }} />
+                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>or</span>
+                  <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.10)' }} />
+                </div>
+
+                {/* Staff Login toggle button */}
+                <button
+                  onClick={() => setShowStaffLogin(true)}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-150 focus:outline-none"
+                  style={{
+                    background: 'rgba(167,139,250,0.10)',
+                    border: '1px solid rgba(167,139,250,0.22)',
+                    color: '#c4b5fd',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = 'rgba(167,139,250,0.18)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'rgba(167,139,250,0.10)';
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                  Staff Login
+                </button>
+              </>
+            )}
+
+            {/* ── STAFF VIEW: Email + Password form ── */}
+            {showStaffLogin && (
+              <form onSubmit={handleStaffLogin} className="flex flex-col gap-4">
+
+                {/* Staff error */}
+                {staffError && (
+                  <div
+                    className="rounded-xl p-3 flex items-start gap-2 text-sm"
+                    style={{
+                      background: 'rgba(239,68,68,0.10)',
+                      border: '1px solid rgba(239,68,68,0.25)',
+                      color: '#fca5a5',
+                    }}
+                  >
+                    <span>⚠️</span>
+                    <span>{staffError}</span>
+                  </div>
+                )}
+
+                {/* Email */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={staffEmail}
+                    onChange={e => setStaffEmail(e.target.value)}
+                    placeholder="yourname@poornima.edu.in"
+                    required
+                    className="w-full py-2.5 px-4 rounded-xl text-sm outline-none transition-all"
+                    style={{
+                      background: 'rgba(255,255,255,0.07)',
+                      border: '1px solid rgba(255,255,255,0.14)',
+                      color: 'rgba(255,255,255,0.88)',
+                    }}
+                    onFocus={e => e.target.style.borderColor = 'rgba(167,139,250,0.5)'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.14)'}
+                  />
+                </div>
+
+                {/* Password */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={staffPassword}
+                      onChange={e => setStaffPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      required
+                      className="w-full py-2.5 px-4 pr-10 rounded-xl text-sm outline-none transition-all"
+                      style={{
+                        background: 'rgba(255,255,255,0.07)',
+                        border: '1px solid rgba(255,255,255,0.14)',
+                        color: 'rgba(255,255,255,0.88)',
+                      }}
+                      onFocus={e => e.target.style.borderColor = 'rgba(167,139,250,0.5)'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.14)'}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(p => !p)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs"
+                      style={{ color: 'rgba(255,255,255,0.35)' }}
+                    >
+                      {showPassword ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                          <line x1="1" y1="1" x2="23" y2="23"/>
+                        </svg>
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  disabled={staffLoading}
+                  className="w-full py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-150 mt-1"
+                  style={{
+                    background: staffLoading ? 'rgba(167,139,250,0.3)' : 'rgba(167,139,250,0.85)',
+                    color: 'white',
+                    cursor: staffLoading ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {staffLoading ? 'Logging in...' : 'Sign In'}
+                </button>
+
+                {/* Back to student login */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowStaffLogin(false);
+                    setStaffError('');
+                    setStaffEmail('');
+                    setStaffPassword('');
+                  }}
+                  className="w-full text-center text-sm mt-1 transition-opacity"
+                  style={{ color: 'rgba(255,255,255,0.35)' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.65)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.35)'}
+                >
+                  ← Back to Student Login
+                </button>
+              </form>
+            )}
+
+            {/* Register link — show only on student view */}
+            {!showStaffLogin && (
+              <div className="mt-6 text-center border-t border-white/10 pt-5">
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                  New staff member?{' '}
+                  <a href="/register" className="font-semibold text-white hover:underline">
+                    Register here
+                  </a>
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Stats */}

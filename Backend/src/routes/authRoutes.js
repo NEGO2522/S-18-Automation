@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { googleAuth, googleCallback, getMe, register } = require('../controllers/authController');
+const { googleAuth, googleCallback, getMe, staffLogin, register } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
-// Google OAuth flow
+// Google OAuth flow (students only — @poornima.edu.in)
 router.get('/google', googleAuth);
 router.get('/google/callback', googleCallback);
+
+// Staff email + password login (HOD, Tutor, Chief Proctor)
+router.post('/staff-login', staffLogin);
 
 // Manual Registration
 router.post('/register', register);

@@ -9,32 +9,41 @@ passport.use(new GoogleStrategy({
   callbackURL: process.env.GOOGLE_CALLBACK_URL
 }, async (accessToken, refreshToken, profile, done) => {
   try {
-    const email = profile.emails[0].value;
+    const rawEmail = profile.emails[0].value;
+    const email = rawEmail.toLowerCase().trim(); // normalize
     console.log('Google OAuth - Email received:', email);
 
-    // TODO: Uncomment this in production
-    // if (!email.endsWith('@poornima.edu.in')) {
-    //   return done(null, false, { message: 'invalid_domain' });
-    // }
+    // STRICT: Only @poornima.edu.in domain is allowed via Google OAuth
+    if (!email.endsWith('@poornima.edu.in')) {
+      console.log('BLOCKED - non-poornima email attempted login:', email);
+      return done(null, false, { message: 'invalid_domain' });
+    }
 
-    // Find user by email
+    // Find existing user by email
     let user = await User.findOne({ email });
     console.log('User found in DB:', user ? 'Yes' : 'No');
 
     if (user) {
+      // Keep googleId and profilePic in sync
+      if (!user.googleId || !user.profilePic) {
+        user.googleId = profile.id;
+        user.profilePic = profile.photos?.[0]?.value || '';
+        await user.save();
+      }
       return done(null, user);
     }
 
-    // New user create karo
+    // New student — domain already verified above
     user = await User.create({
       name: profile.displayName,
-      email: email,
+      email,
+      googleId: profile.id,
       password: crypto.randomBytes(20).toString('hex'),
       role: 'student',
-      profilePic: profile.photos && profile.photos.length > 0 ? profile.photos[0].value : ''
+      profilePic: profile.photos?.[0]?.value || '',
     });
 
-    console.log('New user created:', user.email);
+    console.log('New student created:', user.email);
     return done(null, user);
 
   } catch (error) {

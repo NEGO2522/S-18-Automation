@@ -13,7 +13,6 @@ const googleAuth = passport.authenticate('google', {
 const googleCallback = (req, res, next) => {
   passport.authenticate('google', { session: false, failureRedirect: '/' }, (err, user, info) => {
 
-    // Debug logs — terminal me dikhega exact error
     if (err) console.error('OAuth Error:', err);
     if (info) console.log('OAuth Info:', info);
     if (!user) console.log('No user returned from Google');
@@ -42,10 +41,52 @@ const getMe = async (req, res) => {
   res.json(req.user);
 };
 
+// Staff email + password login
+const staffLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email aur password dono required hain.' });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(401).json({ message: 'Email ya password galat hai.' });
+    }
+
+    // Students should use Google login only
+    if (user.role === 'student') {
+      return res.status(403).json({ message: 'Students ko Google login use karna chahiye.' });
+    }
+
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Email ya password galat hai.' });
+    }
+
+    const token = generateToken(user._id);
+
+    res.json({
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      }
+    });
+  } catch (error) {
+    console.error('Staff Login Error:', error);
+    res.status(500).json({ message: 'Server error. Please try again later.' });
+  }
+};
+
 const register = async (req, res) => {
   try {
     const { name, email, mobile, department, role, password } = req.body;
-    
+
     // Domain validation
     if (!email.endsWith('@poornima.edu.in')) {
       return res.status(400).json({ message: 'Only @poornima.edu.in accounts are allowed.' });
@@ -79,4 +120,4 @@ const register = async (req, res) => {
   }
 };
 
-module.exports = { googleAuth, googleCallback, getMe, register };
+module.exports = { googleAuth, googleCallback, getMe, staffLogin, register };

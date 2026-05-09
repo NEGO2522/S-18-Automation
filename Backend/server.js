@@ -5,6 +5,9 @@ const connectDB = require('./src/config/db');
 const session = require('express-session');
 const passport = require('passport');
 
+// IMPORTANT: passport strategy must be configured BEFORE routes are loaded
+require('./src/config/passport');
+
 const authRoutes = require('./src/routes/authRoutes');
 const s18Routes = require('./src/routes/s18Routes');
 
@@ -21,7 +24,6 @@ app.use(session({
   saveUninitialized: false
 }));
 app.use(passport.initialize());
-require('./src/config/passport');
 
 app.get('/', (req, res) => res.json({ message: 'S18 Automation API running' }));
 app.use('/api/auth', authRoutes);
