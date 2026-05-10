@@ -47,14 +47,10 @@ function App() {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/dashboard/puamdin"
-        element={
-          <ProtectedRoute role="puamdin">
-            <PuamdinDashboard />
-          </ProtectedRoute>
-        }
-      />
+
+      {/* Puamdin dashboard — publicly accessible, no login required */}
+      <Route path="/dashboard/puamdin" element={<PuamdinDashboard />} />
+
       <Route path="/" element={<Navigate to="/login" replace />} />
     </Routes>
   );
