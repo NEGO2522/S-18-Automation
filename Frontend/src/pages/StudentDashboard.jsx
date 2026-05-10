@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import toast, { Toaster } from 'react-hot-toast';
+import API from '../utils/api';
 
 const PU_PURPLE = '#3C3489';
 const PU_PURPLE_DARK = '#2A2362';
@@ -42,19 +43,68 @@ const StudentDashboard = () => {
     undertakingAgreed: false,
   });
 
+  // Uploaded file URLs + IDs from Cloudinary (set after each file is picked)
+  const [uploadedFiles, setUploadedFiles] = useState({
+    brochure:    { url: null, fileId: null, uploading: false },
+    photo:       { url: null, fileId: null, uploading: false },
+    certificate: { url: null, fileId: null, uploading: false },
+  });
+
   useEffect(() => {
     if (activeTab === 'my-requests') fetchMyRequests();
   }, [activeTab]);
 
   const fetchMyRequests = async () => {
-    // TODO: replace with actual API call
+    try {
+      const { data } = await API.get('/s18/my');
+      setMyRequests(data);
+    } catch {
+      toast.error('Could not load your requests.');
+    }
+  };
+
+  // Called when student picks a file — immediately uploads to Cloudinary
+  const handleFileUpload = async (fieldName, file) => {
+    // fieldName: 'brochureFile' | 'participantPhotoFile' | 'certificateFile'
+    const typeMap = {
+      brochureFile:        { key: 'brochure',    endpoint: '/upload/brochure' },
+      participantPhotoFile:{ key: 'photo',       endpoint: '/upload/photo' },
+      certificateFile:     { key: 'certificate', endpoint: '/upload/certificate' },
+    };
+    const { key, endpoint } = typeMap[fieldName];
+
+    // Show file name immediately + mark uploading
+    setFormData(p => ({ ...p, [fieldName]: file }));
+    setUploadedFiles(p => ({ ...p, [key]: { ...p[key], uploading: true } }));
+
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const { data } = await API.post(endpoint, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setUploadedFiles(p => ({
+        ...p,
+        [key]: { url: data.url, fileId: data.fileId, uploading: false },
+      }));
+      toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} uploaded!`);
+    } catch {
+      setFormData(p => ({ ...p, [fieldName]: null }));
+      setUploadedFiles(p => ({ ...p, [key]: { url: null, fileId: null, uploading: false } }));
+      toast.error(`${key} upload failed. Try again.`);
+    }
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
-    if (type === 'checkbox') setFormData(p => ({ ...p, [name]: checked }));
-    else if (type === 'file') setFormData(p => ({ ...p, [name]: files[0] || null }));
-    else setFormData(p => ({ ...p, [name]: value }));
+    if (type === 'checkbox') {
+      setFormData(p => ({ ...p, [name]: checked }));
+    } else if (type === 'file') {
+      const file = files[0];
+      if (file) handleFileUpload(name, file);
+    } else {
+      setFormData(p => ({ ...p, [name]: value }));
+    }
   };
 
   const handleTeamMemberChange = (idx, field, value) => {
@@ -64,33 +114,89 @@ const StudentDashboard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.brochureFile || !formData.participantPhotoFile || !formData.certificateFile) {
-      toast.error('Please upload all 3 required documents');
+
+    // Check all 3 files are uploaded (not just selected)
+    const { brochure, photo, certificate } = uploadedFiles;
+    if (!brochure.url || !photo.url || !certificate.url) {
+      toast.error('Please wait — all 3 documents must finish uploading first.');
+      return;
+    }
+    if (brochure.uploading || photo.uploading || certificate.uploading) {
+      toast.error('Files are still uploading. Please wait.');
       return;
     }
     if (Number(formData.cumulativeAttendance) < 75) {
-      toast.error('Cumulative attendance must be ≥ 75% to be eligible');
+      toast.error('Cumulative attendance must be ≥ 75% to be eligible.');
       return;
     }
     if (!formData.undertakingAgreed) {
-      toast.error('You must agree to the student undertaking before submitting');
+      toast.error('You must agree to the student undertaking before submitting.');
       return;
     }
+
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const numMembers = Number(formData.numberOfTeamMembers);
+      const payload = {
+        studentName:          formData.studentName,
+        registrationNo:       formData.registrationNo,
+        campus:               formData.campus,
+        year:                 formData.year,
+        branch:               formData.branch,
+        email:                formData.email,
+        mobileNo:             formData.mobileNo,
+        cumulativeAttendance: Number(formData.cumulativeAttendance),
+        lastParticipation:    formData.lastParticipation || null,
+        activityName:         formData.activityName,
+        organizingInstitution:formData.organizingInstitution,
+        activityType:         formData.activityType,
+        fromDate:             formData.startDate,
+        toDate:               formData.endDate,
+        teamMembers:          formData.teamMembers.slice(0, numMembers),
+        parentMobileNo:       formData.parentMobileNo,
+        // Cloudinary URLs
+        brochureLink:         brochure.url,
+        participantPhotoLink: photo.url,
+        certificateLink:      certificate.url,
+      };
+
+      const { data: form } = await API.post('/s18', payload);
+
+      // Link uploaded files to the newly created form
+      const fileIds = [brochure.fileId, photo.fileId, certificate.fileId].filter(Boolean);
+      if (fileIds.length) {
+        await API.patch('/upload/attach', { fileIds, s18FormId: form._id });
+      }
+
       toast.success('S18 Request submitted successfully!');
-      setLoading(false);
-      setMyRequests(prev => [{
-        activityName: formData.activityName,
-        organizingInstitution: formData.organizingInstitution,
-        activityType: formData.activityType,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        status: 'pending',
-        submittedAt: new Date().toLocaleDateString('en-IN'),
-      }, ...prev]);
       setActiveTab('my-requests');
-    }, 1200);
+
+      // Reset form
+      setFormData(p => ({
+        ...p,
+        registrationNo: '', campus: '', year: '', branch: '',
+        mobileNo: '', cumulativeAttendance: '', lastParticipation: '',
+        activityName: '', organizingInstitution: '', activityType: '',
+        startDate: '', endDate: '', numberOfTeamMembers: '0',
+        teamMembers: [
+          { name: '', registrationNo: '' },
+          { name: '', registrationNo: '' },
+          { name: '', registrationNo: '' },
+        ],
+        brochureFile: null, participantPhotoFile: null, certificateFile: null,
+        parentMobileNo: '', undertakingAgreed: false,
+      }));
+      setUploadedFiles({
+        brochure:    { url: null, fileId: null, uploading: false },
+        photo:       { url: null, fileId: null, uploading: false },
+        certificate: { url: null, fileId: null, uploading: false },
+      });
+
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Submission failed. Try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const numMembers = Number(formData.numberOfTeamMembers);
@@ -272,19 +378,19 @@ const StudentDashboard = () => {
                 <Grid cols={3}>
                   <div>
                     <Field label="Event Brochure" required>
-                      <FileUploadBox name="brochureFile" file={formData.brochureFile} onChange={handleChange} accept=".pdf,image/*" />
+                      <FileUploadBox name="brochureFile" file={formData.brochureFile} onChange={handleChange} accept=".pdf,image/*" uploading={uploadedFiles.brochure.uploading} />
                     </Field>
                     <p style={{ margin: '6px 0 0', fontSize: 11, color: '#9895B5', textAlign: 'center' }}>PDF ya image • Required</p>
                   </div>
                   <div>
                     <Field label="Photo at Event Venue" required>
-                      <FileUploadBox name="participantPhotoFile" file={formData.participantPhotoFile} onChange={handleChange} accept="image/*" />
+                      <FileUploadBox name="participantPhotoFile" file={formData.participantPhotoFile} onChange={handleChange} accept="image/*" uploading={uploadedFiles.photo.uploading} />
                     </Field>
                     <p style={{ margin: '6px 0 0', fontSize: 11, color: '#9895B5', textAlign: 'center' }}>Image only • Required • Event venue mein li gayi photo</p>
                   </div>
                   <div>
                     <Field label="Certificate" required>
-                      <FileUploadBox name="certificateFile" file={formData.certificateFile} onChange={handleChange} accept=".pdf,image/*" />
+                      <FileUploadBox name="certificateFile" file={formData.certificateFile} onChange={handleChange} accept=".pdf,image/*" uploading={uploadedFiles.certificate.uploading} />
                     </Field>
                     <p style={{ margin: '6px 0 0', fontSize: 11, color: '#9895B5', textAlign: 'center' }}>PDF ya image • Required</p>
                   </div>
@@ -336,7 +442,7 @@ const StudentDashboard = () => {
                     <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
                     Undertaking agreed
                   </span>
-                  <span style={{ color: (formData.brochureFile && formData.participantPhotoFile && formData.certificateFile) ? '#3B6D11' : '#9895B5', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ color: (uploadedFiles.brochure.url && uploadedFiles.photo.url && uploadedFiles.certificate.url) ? '#3B6D11' : '#9895B5', display: 'flex', alignItems: 'center', gap: 4 }}>
                     <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
                     All documents uploaded
                   </span>
@@ -579,20 +685,33 @@ const Select = ({ children, ...props }) => (
   </select>
 );
 
-const FileUploadBox = ({ name, file, onChange, accept = ".pdf,image/*" }) => (
+const FileUploadBox = ({ name, file, onChange, accept = ".pdf,image/*", uploading = false }) => (
   <label style={{
     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-    gap: 8, padding: '18px 12px', borderRadius: 10, cursor: 'pointer',
+    gap: 8, padding: '18px 12px', borderRadius: 10, cursor: uploading ? 'wait' : 'pointer',
     border: `1.5px dashed ${file ? '#7F77DD' : '#D0CEF0'}`,
     background: file ? '#EEEDFE' : '#FAFAFA', transition: 'all 0.15s', textAlign: 'center'
   }}>
-    <svg width="20" height="20" fill="none" stroke={file ? '#534AB7' : '#9895B5'} viewBox="0 0 24 24" strokeWidth="1.5">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-    </svg>
-    <span style={{ fontSize: 12.5, color: file ? '#534AB7' : '#9895B5', fontWeight: file ? 600 : 400, wordBreak: 'break-all' }}>
-      {file ? file.name : 'Click to upload'}
-    </span>
-    <input type="file" name={name} onChange={onChange} accept={accept} style={{ display: 'none' }} />
+    {uploading ? (
+      <>
+        <div style={{
+          width: 20, height: 20, border: '2px solid #CECBF6',
+          borderTopColor: '#3C3489', borderRadius: '50%',
+          animation: 'spin 0.6s linear infinite'
+        }} />
+        <span style={{ fontSize: 12.5, color: '#534AB7', fontWeight: 600 }}>Uploading...</span>
+      </>
+    ) : (
+      <>
+        <svg width="20" height="20" fill="none" stroke={file ? '#534AB7' : '#9895B5'} viewBox="0 0 24 24" strokeWidth="1.5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg>
+        <span style={{ fontSize: 12.5, color: file ? '#534AB7' : '#9895B5', fontWeight: file ? 600 : 400, wordBreak: 'break-all' }}>
+          {file ? file.name : 'Click to upload'}
+        </span>
+      </>
+    )}
+    <input type="file" name={name} onChange={onChange} accept={accept} style={{ display: 'none' }} disabled={uploading} />
   </label>
 );
 

@@ -10,6 +10,7 @@ require('./src/config/passport');
 
 const authRoutes = require('./src/routes/authRoutes');
 const s18Routes = require('./src/routes/s18Routes');
+const uploadRoutes = require('./src/routes/uploadRoutes');
 
 connectDB();
 
@@ -28,6 +29,7 @@ app.use(passport.initialize());
 app.get('/', (req, res) => res.json({ message: 'S18 Automation API running' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/s18', s18Routes);
+app.use('/api/upload', uploadRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

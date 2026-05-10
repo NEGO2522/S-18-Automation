@@ -19,6 +19,31 @@ const BG1 = 'https://poornima.edu.in/assets/images/Online_meta.png';
 
 const DEPARTMENTS = ['FCE', 'FCA', 'FMBS', 'FET', 'FLA', 'FPH', 'FDA', 'FAD'];
 
+const InputField = React.memo(({ label, name, type = 'text', placeholder, value, onChange, ...props }) => (
+  <div className="mb-4">
+    <label className="block text-xs font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.7)' }}>
+      {label}
+    </label>
+    <input
+      type={type}
+      name={name}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      required
+      className="w-full px-3.5 py-2.5 rounded-xl text-sm transition-all outline-none"
+      style={{
+        background: 'rgba(255,255,255,0.06)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        color: 'white',
+      }}
+      onFocus={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'}
+      onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
+      {...props}
+    />
+  </div>
+));
+
 export default function Register() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -48,7 +73,7 @@ export default function Register() {
   };
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e) => {
@@ -79,31 +104,6 @@ export default function Register() {
       setLoading(false);
     }
   };
-
-  const InputField = ({ label, name, type = 'text', placeholder, ...props }) => (
-    <div className="mb-4">
-      <label className="block text-xs font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.7)' }}>
-        {label}
-      </label>
-      <input
-        type={type}
-        name={name}
-        placeholder={placeholder}
-        value={formData[name]}
-        onChange={handleInputChange}
-        required
-        className="w-full px-3.5 py-2.5 rounded-xl text-sm transition-all outline-none"
-        style={{
-          background: 'rgba(255,255,255,0.06)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          color: 'white',
-        }}
-        onFocus={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'}
-        onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
-        {...props}
-      />
-    </div>
-  );
 
   return (
     <div className="min-h-screen w-full relative flex items-center justify-center overflow-x-hidden overflow-y-auto py-10">
@@ -281,9 +281,9 @@ export default function Register() {
               </div>
             ) : (
               <form onSubmit={handleSubmit}>
-                <InputField label="Full Name" name="name" placeholder="John Doe" />
-                <InputField label="Email Address" name="email" type="email" placeholder="john.doe@poornima.edu.in" />
-                <InputField label="Mobile Number" name="mobile" placeholder="9876543210" maxLength="10" />
+                <InputField label="Full Name" name="name" placeholder="John Doe" value={formData.name} onChange={handleInputChange} />
+                <InputField label="Email Address" name="email" type="email" placeholder="john.doe@poornima.edu.in" value={formData.email} onChange={handleInputChange} />
+                <InputField label="Mobile Number" name="mobile" placeholder="9876543210" maxLength="10" value={formData.mobile} onChange={handleInputChange} />
                 
                 <div className="mb-4">
                   <label className="block text-xs font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.7)' }}>
@@ -306,8 +306,8 @@ export default function Register() {
                   </select>
                 </div>
 
-                <InputField label="Password" name="password" type="password" placeholder="••••••••" />
-                <InputField label="Confirm Password" name="confirmPassword" type="password" placeholder="••••••••" />
+                <InputField label="Password" name="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleInputChange} />
+                <InputField label="Confirm Password" name="confirmPassword" type="password" placeholder="••••••••" value={formData.confirmPassword} onChange={handleInputChange} />
 
                 <button
                   type="submit"

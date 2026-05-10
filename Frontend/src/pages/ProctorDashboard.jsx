@@ -5,26 +5,39 @@ import toast, { Toaster } from 'react-hot-toast';
 import { CheckCircle } from 'lucide-react';
 
 const ProctorDashboard = () => {
-  const [activeTab, setActiveTab] = useState('final-approval'); // 'final-approval' | 'post-participation'
+  const [activeTab, setActiveTab] = useState('pending');
   
-  // Tab 1 States
   const [forms, setForms] = useState([]);
   const [loadingForms, setLoadingForms] = useState(true);
   const [bonusDays, setBonusDays] = useState({});
   const [remarks, setRemarks] = useState({});
   const [actionLoading, setActionLoading] = useState({ id: null, type: null });
-
-  // Tab 2 States
-  const [postForms, setPostForms] = useState([]);
-  const [loadingPostForms, setLoadingPostForms] = useState(true);
-  const [checklists, setChecklists] = useState({});
-  const [postActionLoading, setPostActionLoading] = useState(null);
+  const activityLog = [
+    {
+      id: 'h1',
+      studentName: 'Ananya Sharma',
+      registrationNo: '2023PUCS0190',
+      branch: 'Computer Science',
+      activityName: 'Smart India Hackathon',
+      decision: 'Approved',
+      bonusAttendance: 15,
+      date: '08 May 2026'
+    },
+    {
+      id: 'h2',
+      studentName: 'Rohan Bansal',
+      registrationNo: '2024PUIT0244',
+      branch: 'Information Technology',
+      activityName: 'Cloud Computing Summit',
+      decision: 'Denied',
+      bonusAttendance: 0,
+      date: '04 May 2026'
+    }
+  ];
 
   useEffect(() => {
-    if (activeTab === 'final-approval') {
+    if (activeTab === 'pending') {
       fetchPendingForms();
-    } else {
-      fetchPostParticipationForms();
     }
   }, [activeTab]);
 
@@ -63,42 +76,6 @@ const ProctorDashboard = () => {
     }
   };
 
-  const fetchPostParticipationForms = async () => {
-    try {
-      setLoadingPostForms(true);
-      // const { data } = await API.get('/s18/my'); // Filter in API or here
-      // const filtered = data.filter(f => f.status === 'approved' && f.postParticipation?.finalBonusGranted === false);
-      // setPostForms(filtered);
-      
-      // Mock Data
-      setTimeout(() => {
-        setPostForms([
-          {
-            id: '101',
-            studentName: 'Sneha Gupta',
-            activityName: 'AI Seminar',
-            fromDate: '2026-04-10',
-            toDate: '2026-04-11',
-            preApprovedBonus: 10
-          }
-        ]);
-        
-        // Initialize checklists state for the fetched forms
-        const initialChecklists = {};
-        [{ id: '101' }].forEach(f => {
-          initialChecklists[f.id] = { hardCopy: false, softCopy: false };
-        });
-        setChecklists(initialChecklists);
-        
-        setLoadingPostForms(false);
-      }, 1500);
-    } catch (error) {
-      toast.error('Failed to fetch post-participation forms');
-      setLoadingPostForms(false);
-    }
-  };
-
-  // Tab 1 Handlers
   const handleBonusDaysChange = (id, value) => {
     setBonusDays(prev => ({ ...prev, [id]: value }));
   };
@@ -158,33 +135,6 @@ const ProctorDashboard = () => {
     }
   };
 
-  // Tab 2 Handlers
-  const handleCheck = (id, field) => {
-    setChecklists(prev => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        [field]: !prev[id]?.[field]
-      }
-    }));
-  };
-
-  const handleVerifyFinal = async (id) => {
-    setPostActionLoading(id);
-    try {
-      // await API.put(`/s18/${id}/proctor/post`);
-      
-      setTimeout(() => {
-        toast.success('Final Bonus Attendance Verified & Granted!');
-        setPostForms(postForms.filter(f => f.id !== id));
-        setPostActionLoading(null);
-      }, 1000);
-    } catch (error) {
-      toast.error('Failed to verify final attendance');
-      setPostActionLoading(null);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -193,31 +143,33 @@ const ProctorDashboard = () => {
       <div className="max-w-4xl mx-auto px-4 py-8">
         
         {/* TABS */}
-        <div className="flex gap-6 border-b border-gray-200 mb-8">
+        <div className="mb-8 inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
           <button
-            onClick={() => setActiveTab('final-approval')}
-            className={`pb-3 font-semibold text-sm transition-colors ${
-              activeTab === 'final-approval'
-                ? 'border-b-2 border-[#3C3489] text-[#3C3489]'
-                : 'text-gray-500 hover:text-gray-700'
+            type="button"
+            onClick={() => setActiveTab('pending')}
+            className={`min-w-28 rounded-md px-4 py-2 text-sm font-semibold transition ${
+              activeTab === 'pending'
+                ? 'bg-[#3C3489] text-white shadow-sm'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
             }`}
           >
-            Final Approval
+            Pending
           </button>
           <button
-            onClick={() => setActiveTab('post-participation')}
-            className={`pb-3 font-semibold text-sm transition-colors ${
-              activeTab === 'post-participation'
-                ? 'border-b-2 border-[#3C3489] text-[#3C3489]'
-                : 'text-gray-500 hover:text-gray-700'
+            type="button"
+            onClick={() => setActiveTab('activity-log')}
+            className={`min-w-28 rounded-md px-4 py-2 text-sm font-semibold transition ${
+              activeTab === 'activity-log'
+                ? 'bg-[#3C3489] text-white shadow-sm'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
             }`}
           >
-            Post Participation
+            Activity Log
           </button>
         </div>
 
         {/* TAB 1 CONTENT */}
-        {activeTab === 'final-approval' && (
+        {activeTab === 'pending' && (
           <div>
             <h1 className="text-2xl font-semibold text-gray-800">Final Approval</h1>
             <p className="text-sm text-gray-500 mt-1 mb-6">HOD recommended forms — Chief Proctor final decision</p>
@@ -382,92 +334,38 @@ const ProctorDashboard = () => {
           </div>
         )}
 
-        {/* TAB 2 CONTENT */}
-        {activeTab === 'post-participation' && (
+        {activeTab === 'activity-log' && (
           <div>
-            <h1 className="text-2xl font-semibold text-gray-800">Post Participation</h1>
-            <p className="text-sm text-gray-500 mt-1 mb-6">Verify reports and grant final bonus attendance</p>
+            <h1 className="text-2xl font-semibold text-gray-800">Activity Log</h1>
+            <p className="text-sm text-gray-500 mt-1 mb-6">Final decisions and granted bonus attendance</p>
 
-            {loadingPostForms ? (
-               <div className="space-y-4">
-                <div className="bg-white rounded-2xl h-32 animate-pulse shadow-sm border border-gray-100"></div>
-                <div className="bg-white rounded-2xl h-32 animate-pulse shadow-sm border border-gray-100"></div>
-               </div>
-            ) : postForms.length === 0 ? (
-              <div className="text-center py-20 text-gray-500">
-                Koi post-participation verification pending nahi hai
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {postForms.map(form => {
-                  const check = checklists[form.id] || {};
-                  const isCheckedBoth = check.hardCopy && check.softCopy;
-                  const isPostLoading = postActionLoading === form.id;
-
-                  return (
-                    <div key={form.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
-                      {/* TOP ROW */}
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-semibold text-gray-800">{form.studentName} • {form.activityName}</h3>
-                        </div>
-                        <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-semibold">
-                          Pre-Approved
-                        </span>
-                      </div>
-
-                      {/* MIDDLE */}
-                      <div className="mt-3 text-sm text-gray-600">
-                        <p>Dates: {form.fromDate} to {form.toDate}</p>
-                        <p className="mt-1">Pre-Approved Bonus: <span className="font-semibold">{form.preApprovedBonus} days</span></p>
-                      </div>
-
-                      {/* VERIFICATION CHECKLIST */}
-                      <div className="mt-4 space-y-3">
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            className="w-4 h-4 text-[#3C3489] rounded border-gray-300 focus:ring-[#3C3489]"
-                            checked={check.hardCopy || false}
-                            onChange={() => handleCheck(form.id, 'hardCopy')}
-                            disabled={isPostLoading}
-                          />
-                          <span className="text-sm text-gray-700">Hard copy report submitted to HOD/Dy.HOD</span>
-                        </label>
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            className="w-4 h-4 text-[#3C3489] rounded border-gray-300 focus:ring-[#3C3489]"
-                            checked={check.softCopy || false}
-                            onChange={() => handleCheck(form.id, 'softCopy')}
-                            disabled={isPostLoading}
-                          />
-                          <span className="text-sm text-gray-700">Soft copy + photos emailed to pic@poornima.org (CC to HOD)</span>
-                        </label>
-                      </div>
-
-                      {/* GRANT BUTTON */}
-                      <div className="mt-4">
-                        <button
-                          onClick={() => handleVerifyFinal(form.id)}
-                          disabled={!isCheckedBoth || isPostLoading}
-                          className="bg-[#3C3489] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[#26215C] transition flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
-                        >
-                          {isPostLoading ? (
-                            <span className="flex items-center gap-2">
-                              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                              Verifying...
-                            </span>
-                          ) : (
-                            "Verify & Grant Final Bonus Attendance"
-                          )}
-                        </button>
-                      </div>
+            <div className="space-y-4">
+              {activityLog.map(form => (
+                <div key={form.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-semibold text-gray-800">{form.studentName}</h3>
+                      <p className="text-sm text-gray-500">
+                        {form.registrationNo} • {form.branch} • {form.activityName}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-2">
+                        Bonus Attendance: <span className="font-semibold text-gray-700">{form.bonusAttendance} days</span>
+                      </p>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                    <div className="text-right">
+                      <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                        form.decision === 'Approved'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-red-100 text-red-700'
+                      }`}>
+                        {form.decision}
+                      </span>
+                      <p className="text-xs text-gray-400 mt-2">{form.date}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

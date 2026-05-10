@@ -5,12 +5,34 @@ import toast, { Toaster } from 'react-hot-toast';
 import { CheckCircle } from 'lucide-react';
 
 const TutorDashboard = () => {
+  const [activeView, setActiveView] = useState('pending');
   const [forms, setForms] = useState([]);
   const [loading, setLoading] = useState(true);
   
   const [expandedForms, setExpandedForms] = useState({});
   const [remarks, setRemarks] = useState({});
+  const [rejectingForms, setRejectingForms] = useState({});
   const [actionLoading, setActionLoading] = useState({ id: null, type: null });
+  const activityLog = [
+    {
+      id: 'h1',
+      studentName: 'Aarav Mehta',
+      registrationNo: '2023PUCS0108',
+      activityName: 'Robotics Workshop',
+      decision: 'Approved',
+      date: '08 May 2026',
+      remarks: 'Forwarded to HOD'
+    },
+    {
+      id: 'h2',
+      studentName: 'Nisha Verma',
+      registrationNo: '2024PUIT0321',
+      activityName: 'Design Sprint',
+      decision: 'Rejected',
+      date: '06 May 2026',
+      remarks: 'Parent consent missing'
+    }
+  ];
 
   useEffect(() => {
     fetchPendingForms();
@@ -101,6 +123,7 @@ const TutorDashboard = () => {
   const handleReject = async (id) => {
     const currentRemarks = remarks[id] || '';
     if (!currentRemarks.trim()) {
+      setRejectingForms(prev => ({ ...prev, [id]: true }));
       toast.error('Rejection ke liye remarks required hai');
       return;
     }
@@ -112,6 +135,11 @@ const TutorDashboard = () => {
       setTimeout(() => {
         toast.success('Rejected. Student ko notify kar diya.');
         setForms(forms.filter(form => form.id !== id));
+        setRejectingForms(prev => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
         setActionLoading({ id: null, type: null });
       }, 1000);
     } catch (error) {
@@ -132,15 +160,40 @@ const TutorDashboard = () => {
             <h1 className="text-2xl font-semibold text-gray-800">Pending Verifications</h1>
             <p className="text-sm text-gray-500 mt-1">Tutor se approval baaki hai</p>
           </div>
-          {!loading && forms.length > 0 && (
+          {activeView === 'pending' && !loading && forms.length > 0 && (
             <span className="bg-yellow-100 text-yellow-700 text-sm font-semibold px-3 py-1 rounded-full">
               {forms.length} Pending
             </span>
           )}
         </div>
 
+        <div className="mb-6 inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
+          <button
+            type="button"
+            onClick={() => setActiveView('pending')}
+            className={`min-w-28 rounded-md px-4 py-2 text-sm font-semibold transition ${
+              activeView === 'pending'
+                ? 'bg-[#3C3489] text-white shadow-sm'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+            }`}
+          >
+            Pending
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('activity-log')}
+            className={`min-w-28 rounded-md px-4 py-2 text-sm font-semibold transition ${
+              activeView === 'activity-log'
+                ? 'bg-[#3C3489] text-white shadow-sm'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+            }`}
+          >
+            Activity Log
+          </button>
+        </div>
+
         {/* LOADING STATE */}
-        {loading && (
+        {activeView === 'pending' && loading && (
           <div className="space-y-4">
             <div className="bg-white rounded-2xl h-32 animate-pulse shadow-sm border border-gray-100"></div>
             <div className="bg-white rounded-2xl h-32 animate-pulse shadow-sm border border-gray-100"></div>
@@ -149,7 +202,7 @@ const TutorDashboard = () => {
         )}
 
         {/* EMPTY STATE */}
-        {!loading && forms.length === 0 && (
+        {activeView === 'pending' && !loading && forms.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20">
             <CheckCircle className="w-40 h-40 text-gray-300" />
             <p className="text-gray-400 text-sm mt-3">Koi pending forms nahi hain</p>
@@ -157,7 +210,7 @@ const TutorDashboard = () => {
         )}
 
         {/* FORM CARDS */}
-        {!loading && forms.length > 0 && (
+        {activeView === 'pending' && !loading && forms.length > 0 && (
           <div className="space-y-4">
             {forms.map(form => {
               const isExpanded = !!expandedForms[form.id];
@@ -248,20 +301,22 @@ const TutorDashboard = () => {
                     </div>
                   )}
 
-                  {/* REMARKS INPUT */}
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Remarks (required if rejecting)
-                    </label>
-                    <input
-                      type="text"
-                      value={remarks[form.id] || ''}
-                      onChange={(e) => handleRemarkChange(form.id, e.target.value)}
-                      placeholder="Add your remarks here..."
-                      className="border border-gray-300 rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-[#3C3489] bg-white"
-                      disabled={isAnyLoading}
-                    />
-                  </div>
+                  {rejectingForms[form.id] && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Remarks (required if rejecting)
+                      </label>
+                      <input
+                        type="text"
+                        value={remarks[form.id] || ''}
+                        onChange={(e) => handleRemarkChange(form.id, e.target.value)}
+                        placeholder="Add your remarks here..."
+                        className="border border-gray-300 rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-[#3C3489] bg-white"
+                        disabled={isAnyLoading}
+                        autoFocus
+                      />
+                    </div>
+                  )}
 
                   {/* ACTION BUTTONS ROW */}
                   <div className="mt-4 flex gap-3">
@@ -298,6 +353,32 @@ const TutorDashboard = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {activeView === 'activity-log' && (
+          <div className="space-y-4">
+            {activityLog.map(item => (
+              <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold text-gray-800">{item.studentName}</h3>
+                    <p className="text-sm text-gray-500">{item.registrationNo} • {item.activityName}</p>
+                    <p className="text-sm text-gray-500 mt-2">{item.remarks}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                      item.decision === 'Approved'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-700'
+                    }`}>
+                      {item.decision}
+                    </span>
+                    <p className="text-xs text-gray-400 mt-2">{item.date}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
