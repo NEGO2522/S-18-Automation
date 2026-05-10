@@ -1,11 +1,17 @@
+require('dotenv').config();
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key:    process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+if (process.env.CLOUDINARY_URL) {
+  cloudinary.config({ secure: true });
+} else {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key:    process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure:     true,
+  });
+}
 
 // Store file in memory buffer first, then we stream to Cloudinary manually
 // This avoids multer-storage-cloudinary version compatibility issues entirely
@@ -33,7 +39,10 @@ const uploadToCloudinary = (buffer, folder, mimetype) => {
         public_id: `${Date.now()}`,
       },
       (error, result) => {
-        if (error) return reject(error);
+        if (error) {
+          const message = error.message || error.error?.message || 'Cloudinary upload failed.';
+          return reject(new Error(message));
+        }
         resolve(result);
       }
     );

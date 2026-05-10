@@ -3,7 +3,12 @@ const S18 = require('../models/S18');
 // POST /api/s18 — Student submits form
 const submitForm = async (req, res) => {
   try {
-    const form = await S18.create({ ...req.body, student: req.user._id });
+    const course = typeof req.body.course === 'string' ? req.body.course.trim() : '';
+    if (!course) {
+      return res.status(400).json({ message: 'Course is required.' });
+    }
+
+    const form = await S18.create({ ...req.body, course, student: req.user._id });
     res.status(201).json(form);
   } catch (error) {
     res.status(500).json({ message: error.message });
