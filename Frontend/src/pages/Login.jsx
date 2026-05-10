@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const LOGO = 'https://upload.wikimedia.org/wikipedia/en/f/f4/Poornima_University.png';
@@ -16,10 +16,18 @@ const GoogleIcon = () => (
 const BG2 = 'https://content.jdmagicbox.com/comp/jaipur/g3/0141px141.x141.230201230302.m1g3/catalogue/school-of-design-and-arts-poornima-university-vidhani-jaipur-colleges-0hpavyad5r.jpg';
 const BG1 = 'https://poornima.edu.in/assets/images/Online_meta.png';
 
+const ROLE_ROUTES = {
+  student:      '/dashboard/student',
+  tutor:        '/dashboard/tutor',
+  hod:          '/dashboard/hod',
+  chief_proctor:'/dashboard/proctor',
+  puamdin:      '/dashboard/puamdin',
+};
+
 function Login() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, user, loading } = useAuth();
 
   const error = searchParams.get('error');
 
@@ -30,6 +38,29 @@ function Login() {
   const [staffError, setStaffError] = useState('');
   const [staffLoading, setStaffLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // ── GUARD: agar already logged in hai to seedha dashboard pe bhejo ──
+  if (!loading && user) {
+    const dest = ROLE_ROUTES[user.role] || '/dashboard/student';
+    return <Navigate to={dest} replace />;
+  }
+
+  // Auth context abhi localStorage load kar raha hai — wait karo
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div style={{
+            width: '32px', height: '32px', border: '3px solid rgba(255,255,255,0.1)',
+            borderTop: '3px solid #a78bfa', borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite'
+          }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleGoogleLogin = () => {
     window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
@@ -56,14 +87,7 @@ function Login() {
       }
 
       login(data.user, data.token);
-
-      const routes = {
-        tutor: '/dashboard/tutor',
-        hod: '/dashboard/hod',
-        chief_proctor: '/dashboard/proctor',
-      };
-
-      navigate(routes[data.user.role] || '/login', { replace: true });
+      navigate(ROLE_ROUTES[data.user.role] || '/login', { replace: true });
     } catch {
       setStaffError('Network error. Please try again.');
       setStaffLoading(false);

@@ -49,7 +49,11 @@ function App() {
       />
       <Route
         path="/dashboard/puamdin"
-        element={<PuamdinDashboard />}
+        element={
+          <ProtectedRoute role="puamdin">
+            <PuamdinDashboard />
+          </ProtectedRoute>
+        }
       />
       <Route path="/" element={<Navigate to="/login" replace />} />
     </Routes>
