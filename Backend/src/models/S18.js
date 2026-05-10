@@ -5,9 +5,10 @@ const s18Schema = new mongoose.Schema({
   student: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   studentName: { type: String, required: true },
   registrationNo: { type: String, required: true },
-  campus: { type: String, required: true },
-  year: { type: String, required: true },
-  branch: { type: String, required: true },
+  campus: { type: String, required: true, trim: true },
+  course: { type: String, required: true, trim: true },
+  year: { type: String, required: true, trim: true },
+  branch: { type: String, required: true, trim: true },
   email: { type: String, required: true },
   mobileNo: { type: String, required: true },
 
@@ -19,6 +20,7 @@ const s18Schema = new mongoose.Schema({
     enum: ['Hackathon', 'Technical Competition', 'Workshop/Seminar', 'Cultural Event', 'Sports', 'Other'],
     required: true
   },
+  activityTypeOther: { type: String, trim: true },
   fromDate: { type: Date, required: true },
   toDate: { type: Date, required: true },
   cumulativeAttendance: { type: Number, required: true },
