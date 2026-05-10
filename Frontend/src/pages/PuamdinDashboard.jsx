@@ -6,19 +6,17 @@ import {
   Plus, Trash2, Eye, EyeOff, Users, LayoutDashboard, X, CheckCircle2
 } from 'lucide-react';
 
-// ─── Sidebar nav items ───────────────────────────────────────────────────────
 const NAV_ITEMS = [
-  { key: 'overview',    label: 'Overview',    icon: LayoutDashboard },
-  { key: 'college',     label: 'College',     icon: Building2 },
-  { key: 'branch',      label: 'Branch',      icon: BookOpen },
-  { key: 'department',  label: 'Department',  icon: BookOpen },
-  { key: 'course',      label: 'Course',      icon: GraduationCap },
-  { key: 'tutor',       label: 'Add Tutor',   icon: UserPlus },
-  { key: 'dean',        label: 'Add Dean',    icon: Users },
-  { key: 'hod',         label: 'Add HOD',     icon: Users },
+  { key: 'overview',   label: 'Overview',   icon: LayoutDashboard },
+  { key: 'college',    label: 'College',    icon: Building2 },
+  { key: 'branch',     label: 'Branch',     icon: BookOpen },
+  { key: 'department', label: 'Department', icon: BookOpen },
+  { key: 'course',     label: 'Course',     icon: GraduationCap },
+  { key: 'tutor',      label: 'Add Tutor',  icon: UserPlus },
+  { key: 'dean',       label: 'Add Dean',   icon: Users },
+  { key: 'hod',        label: 'Add HOD',    icon: Users },
 ];
 
-// ─── Generic list store (local state, replace with API calls later) ──────────
 const useCRUD = (initial = []) => {
   const [items, setItems] = useState(initial);
   const add    = (item) => setItems(p => [...p, { id: Date.now(), ...item }]);
@@ -26,7 +24,6 @@ const useCRUD = (initial = []) => {
   return { items, add, remove };
 };
 
-// ─── Small reusable components ───────────────────────────────────────────────
 const Card = ({ children, className = '' }) => (
   <div className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-6 ${className}`}>
     {children}
@@ -79,16 +76,12 @@ const ItemRow = ({ label, sub, onDelete }) => (
       <p className="text-sm font-medium text-gray-800">{label}</p>
       {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
     </div>
-    <button
-      onClick={onDelete}
-      className="text-gray-300 hover:text-red-500 transition p-1 rounded-lg hover:bg-red-50"
-    >
+    <button onClick={onDelete} className="text-gray-300 hover:text-red-500 transition p-1 rounded-lg hover:bg-red-50">
       <Trash2 size={15} />
     </button>
   </div>
 );
 
-// ─── PASSWORD INPUT with toggle ──────────────────────────────────────────────
 const PasswordInput = ({ value, onChange, placeholder }) => {
   const [show, setShow] = useState(false);
   return (
@@ -100,31 +93,23 @@ const PasswordInput = ({ value, onChange, placeholder }) => {
         placeholder={placeholder}
         className="w-full border border-gray-200 rounded-lg px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#3C3489] bg-white"
       />
-      <button
-        type="button"
-        onClick={() => setShow(s => !s)}
-        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-      >
+      <button type="button" onClick={() => setShow(s => !s)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
         {show ? <EyeOff size={16} /> : <Eye size={16} />}
       </button>
     </div>
   );
 };
 
-// ════════════════════════════════════════════════════════════════════════════
-// SECTION VIEWS
-// ════════════════════════════════════════════════════════════════════════════
-
-// ─── Overview ────────────────────────────────────────────────────────────────
+// ── OVERVIEW ─────────────────────────────────────────────────────────────────
 const OverviewSection = ({ colleges, branches, departments, courses, tutors, deans, hods, setActive }) => {
   const stats = [
-    { label: 'Colleges',    value: colleges.length,    icon: Building2,      key: 'college'    },
-    { label: 'Branches',    value: branches.length,    icon: BookOpen,       key: 'branch'     },
-    { label: 'Departments', value: departments.length, icon: BookOpen,       key: 'department' },
-    { label: 'Courses',     value: courses.length,     icon: GraduationCap,  key: 'course'     },
-    { label: 'Tutors',      value: tutors.length,      icon: UserPlus,       key: 'tutor'      },
-    { label: 'Deans',       value: deans.length,       icon: Users,          key: 'dean'       },
-    { label: 'HODs',        value: hods.length,        icon: Users,          key: 'hod'        },
+    { label: 'Colleges',    value: colleges.length,    icon: Building2,     key: 'college'    },
+    { label: 'Branches',    value: branches.length,    icon: BookOpen,      key: 'branch'     },
+    { label: 'Departments', value: departments.length, icon: BookOpen,      key: 'department' },
+    { label: 'Courses',     value: courses.length,     icon: GraduationCap, key: 'course'     },
+    { label: 'Tutors',      value: tutors.length,      icon: UserPlus,      key: 'tutor'      },
+    { label: 'Deans',       value: deans.length,       icon: Users,         key: 'dean'       },
+    { label: 'HODs',        value: hods.length,        icon: Users,         key: 'hod'        },
   ];
   return (
     <div>
@@ -132,9 +117,7 @@ const OverviewSection = ({ colleges, branches, departments, courses, tutors, dea
       <p className="text-sm text-gray-500 mb-6">Poornima University — Admin Control Panel</p>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {stats.map(({ label, value, icon: Icon, key }) => (
-          <button
-            key={key}
-            onClick={() => setActive(key)}
+          <button key={key} onClick={() => setActive(key)}
             className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-left hover:border-[#3C3489] hover:shadow-md transition group"
           >
             <div className="flex items-center justify-between mb-3">
@@ -152,12 +135,11 @@ const OverviewSection = ({ colleges, branches, departments, courses, tutors, dea
   );
 };
 
-// ─── College ─────────────────────────────────────────────────────────────────
+// ── COLLEGE ───────────────────────────────────────────────────────────────────
 const CollegeSection = ({ store }) => {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
-
   const handleAdd = async () => {
     if (!name.trim()) return toast.error('College name required');
     setLoading(true);
@@ -167,47 +149,31 @@ const CollegeSection = ({ store }) => {
     setName(''); setCode('');
     setLoading(false);
   };
-
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-gray-800">College</h2>
-        <p className="text-sm text-gray-500 mt-0.5">Add colleges under Poornima University</p>
-      </div>
+      <div><h2 className="text-xl font-semibold text-gray-800">College</h2><p className="text-sm text-gray-500 mt-0.5">Add colleges under Poornima University</p></div>
       <Card>
         <h3 className="text-sm font-semibold text-gray-700 mb-4">Add New College</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <Label required>College Name</Label>
-            <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Poornima College of Engineering" />
-          </div>
-          <div>
-            <Label>College Code</Label>
-            <Input value={code} onChange={e => setCode(e.target.value)} placeholder="e.g. PCE" />
-          </div>
+          <div><Label required>College Name</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Poornima College of Engineering" /></div>
+          <div><Label>College Code</Label><Input value={code} onChange={e => setCode(e.target.value)} placeholder="e.g. PCE" /></div>
         </div>
         <PrimaryBtn loading={loading} onClick={handleAdd}>Add College</PrimaryBtn>
       </Card>
       {store.items.length > 0 && (
-        <Card>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Added Colleges ({store.items.length})</h3>
-          <div className="space-y-2">
-            {store.items.map(c => (
-              <ItemRow key={c.id} label={c.name} sub={c.code || null} onDelete={() => store.remove(c.id)} />
-            ))}
-          </div>
+        <Card><h3 className="text-sm font-semibold text-gray-700 mb-3">Added Colleges ({store.items.length})</h3>
+          <div className="space-y-2">{store.items.map(c => <ItemRow key={c.id} label={c.name} sub={c.code || null} onDelete={() => store.remove(c.id)} />)}</div>
         </Card>
       )}
     </div>
   );
 };
 
-// ─── Branch ──────────────────────────────────────────────────────────────────
+// ── BRANCH ────────────────────────────────────────────────────────────────────
 const BranchSection = ({ store, colleges }) => {
   const [name, setName] = useState('');
   const [college, setCollege] = useState('');
   const [loading, setLoading] = useState(false);
-
   const handleAdd = async () => {
     if (!name.trim()) return toast.error('Branch name required');
     setLoading(true);
@@ -217,50 +183,31 @@ const BranchSection = ({ store, colleges }) => {
     setName(''); setCollege('');
     setLoading(false);
   };
-
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-gray-800">Branch</h2>
-        <p className="text-sm text-gray-500 mt-0.5">Add branches (e.g. Computer Science, Mechanical)</p>
-      </div>
+      <div><h2 className="text-xl font-semibold text-gray-800">Branch</h2><p className="text-sm text-gray-500 mt-0.5">Add branches (e.g. Computer Science, Mechanical)</p></div>
       <Card>
         <h3 className="text-sm font-semibold text-gray-700 mb-4">Add New Branch</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <Label required>Branch Name</Label>
-            <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Computer Science & Engineering" />
-          </div>
-          <div>
-            <Label>Under College</Label>
-            <Select value={college} onChange={e => setCollege(e.target.value)}>
-              <option value="">Select College</option>
-              {colleges.items.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-            </Select>
-          </div>
+          <div><Label required>Branch Name</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Computer Science & Engineering" /></div>
+          <div><Label>Under College</Label><Select value={college} onChange={e => setCollege(e.target.value)}><option value="">Select College</option>{colleges.items.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}</Select></div>
         </div>
         <PrimaryBtn loading={loading} onClick={handleAdd}>Add Branch</PrimaryBtn>
       </Card>
       {store.items.length > 0 && (
-        <Card>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Added Branches ({store.items.length})</h3>
-          <div className="space-y-2">
-            {store.items.map(b => (
-              <ItemRow key={b.id} label={b.name} sub={b.college || null} onDelete={() => store.remove(b.id)} />
-            ))}
-          </div>
+        <Card><h3 className="text-sm font-semibold text-gray-700 mb-3">Added Branches ({store.items.length})</h3>
+          <div className="space-y-2">{store.items.map(b => <ItemRow key={b.id} label={b.name} sub={b.college || null} onDelete={() => store.remove(b.id)} />)}</div>
         </Card>
       )}
     </div>
   );
 };
 
-// ─── Department ──────────────────────────────────────────────────────────────
+// ── DEPARTMENT ────────────────────────────────────────────────────────────────
 const DepartmentSection = ({ store, branches }) => {
   const [name, setName] = useState('');
   const [branch, setBranch] = useState('');
   const [loading, setLoading] = useState(false);
-
   const handleAdd = async () => {
     if (!name.trim()) return toast.error('Department name required');
     setLoading(true);
@@ -270,52 +217,33 @@ const DepartmentSection = ({ store, branches }) => {
     setName(''); setBranch('');
     setLoading(false);
   };
-
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-gray-800">Department</h2>
-        <p className="text-sm text-gray-500 mt-0.5">Add departments within branches</p>
-      </div>
+      <div><h2 className="text-xl font-semibold text-gray-800">Department</h2><p className="text-sm text-gray-500 mt-0.5">Add departments within branches</p></div>
       <Card>
         <h3 className="text-sm font-semibold text-gray-700 mb-4">Add New Department</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <Label required>Department Name</Label>
-            <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. AI & Machine Learning" />
-          </div>
-          <div>
-            <Label>Under Branch</Label>
-            <Select value={branch} onChange={e => setBranch(e.target.value)}>
-              <option value="">Select Branch</option>
-              {branches.items.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
-            </Select>
-          </div>
+          <div><Label required>Department Name</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. AI & Machine Learning" /></div>
+          <div><Label>Under Branch</Label><Select value={branch} onChange={e => setBranch(e.target.value)}><option value="">Select Branch</option>{branches.items.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}</Select></div>
         </div>
         <PrimaryBtn loading={loading} onClick={handleAdd}>Add Department</PrimaryBtn>
       </Card>
       {store.items.length > 0 && (
-        <Card>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Added Departments ({store.items.length})</h3>
-          <div className="space-y-2">
-            {store.items.map(d => (
-              <ItemRow key={d.id} label={d.name} sub={d.branch || null} onDelete={() => store.remove(d.id)} />
-            ))}
-          </div>
+        <Card><h3 className="text-sm font-semibold text-gray-700 mb-3">Added Departments ({store.items.length})</h3>
+          <div className="space-y-2">{store.items.map(d => <ItemRow key={d.id} label={d.name} sub={d.branch || null} onDelete={() => store.remove(d.id)} />)}</div>
         </Card>
       )}
     </div>
   );
 };
 
-// ─── Course ──────────────────────────────────────────────────────────────────
+// ── COURSE ────────────────────────────────────────────────────────────────────
 const CourseSection = ({ store, departments }) => {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [dept, setDept] = useState('');
   const [duration, setDuration] = useState('');
   const [loading, setLoading] = useState(false);
-
   const handleAdd = async () => {
     if (!name.trim()) return toast.error('Course name required');
     setLoading(true);
@@ -325,67 +253,38 @@ const CourseSection = ({ store, departments }) => {
     setName(''); setCode(''); setDept(''); setDuration('');
     setLoading(false);
   };
-
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-gray-800">Course</h2>
-        <p className="text-sm text-gray-500 mt-0.5">Add courses offered in departments</p>
-      </div>
+      <div><h2 className="text-xl font-semibold text-gray-800">Course</h2><p className="text-sm text-gray-500 mt-0.5">Add courses offered in departments</p></div>
       <Card>
         <h3 className="text-sm font-semibold text-gray-700 mb-4">Add New Course</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <Label required>Course Name</Label>
-            <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. B.Tech AIML" />
-          </div>
-          <div>
-            <Label>Course Code</Label>
-            <Input value={code} onChange={e => setCode(e.target.value)} placeholder="e.g. BTAIML" />
-          </div>
-          <div>
-            <Label>Department</Label>
-            <Select value={dept} onChange={e => setDept(e.target.value)}>
-              <option value="">Select Department</option>
-              {departments.items.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
-            </Select>
-          </div>
-          <div>
-            <Label>Duration</Label>
-            <Select value={duration} onChange={e => setDuration(e.target.value)}>
-              <option value="">Select Duration</option>
-              {['1 Year', '2 Years', '3 Years', '4 Years', '5 Years'].map(d => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </Select>
-          </div>
+          <div><Label required>Course Name</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. B.Tech AIML" /></div>
+          <div><Label>Course Code</Label><Input value={code} onChange={e => setCode(e.target.value)} placeholder="e.g. BTAIML" /></div>
+          <div><Label>Department</Label><Select value={dept} onChange={e => setDept(e.target.value)}><option value="">Select Department</option>{departments.items.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}</Select></div>
+          <div><Label>Duration</Label><Select value={duration} onChange={e => setDuration(e.target.value)}><option value="">Select Duration</option>{['1 Year','2 Years','3 Years','4 Years','5 Years'].map(d => <option key={d} value={d}>{d}</option>)}</Select></div>
         </div>
         <PrimaryBtn loading={loading} onClick={handleAdd}>Add Course</PrimaryBtn>
       </Card>
       {store.items.length > 0 && (
-        <Card>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Added Courses ({store.items.length})</h3>
-          <div className="space-y-2">
-            {store.items.map(c => (
-              <ItemRow key={c.id} label={`${c.name}${c.code ? ` (${c.code})` : ''}`} sub={[c.dept, c.duration].filter(Boolean).join(' • ') || null} onDelete={() => store.remove(c.id)} />
-            ))}
-          </div>
+        <Card><h3 className="text-sm font-semibold text-gray-700 mb-3">Added Courses ({store.items.length})</h3>
+          <div className="space-y-2">{store.items.map(c => <ItemRow key={c.id} label={`${c.name}${c.code ? ` (${c.code})` : ''}`} sub={[c.dept, c.duration].filter(Boolean).join(' • ') || null} onDelete={() => store.remove(c.id)} />)}</div>
         </Card>
       )}
     </div>
   );
 };
 
-// ─── Generic Staff Form (Tutor / Dean / HOD) ─────────────────────────────────
+// ── STAFF FORM (Tutor / Dean / HOD) ──────────────────────────────────────────
 const StaffSection = ({ title, subtitle, roleName, store, departments, branches }) => {
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '', employeeId: '', dept: '', branch: '' });
   const [loading, setLoading] = useState(false);
   const F = (key) => ({ value: form[key], onChange: e => setForm(p => ({ ...p, [key]: e.target.value })) });
 
   const handleAdd = async () => {
-    if (!form.name.trim())     return toast.error('Name required');
-    if (!form.email.trim())    return toast.error('Email required');
-    if (!form.password)        return toast.error('Password required');
+    if (!form.name.trim())  return toast.error('Name required');
+    if (!form.email.trim()) return toast.error('Email required');
+    if (!form.password)     return toast.error('Password required');
     if (form.password !== form.confirm) return toast.error('Passwords do not match');
     if (form.password.length < 6)       return toast.error('Password must be at least 6 characters');
     setLoading(true);
@@ -398,99 +297,39 @@ const StaffSection = ({ title, subtitle, roleName, store, departments, branches 
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
-        <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>
-      </div>
+      <div><h2 className="text-xl font-semibold text-gray-800">{title}</h2><p className="text-sm text-gray-500 mt-0.5">{subtitle}</p></div>
       <Card>
         <h3 className="text-sm font-semibold text-gray-700 mb-4">Add {roleName} Account</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          {/* Name */}
-          <div>
-            <Label required>{roleName} Name</Label>
-            <Input {...F('name')} placeholder={`Full name of ${roleName.toLowerCase()}`} />
-          </div>
-          {/* Employee ID */}
-          <div>
-            <Label>Employee ID</Label>
-            <Input {...F('employeeId')} placeholder="e.g. PU-2024-001" />
-          </div>
-          {/* Email */}
-          <div className="md:col-span-2">
-            <Label required>Email</Label>
-            <Input {...F('email')} type="email" placeholder="university email address" />
-          </div>
-          {/* Branch / Dept selectors (only if data available) */}
-          {branches && (
-            <div>
-              <Label>Branch</Label>
-              <Select {...F('branch')}>
-                <option value="">Select Branch</option>
-                {branches.items.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
-              </Select>
-            </div>
-          )}
-          {departments && (
-            <div>
-              <Label>Department</Label>
-              <Select {...F('dept')}>
-                <option value="">Select Department</option>
-                {departments.items.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
-              </Select>
-            </div>
-          )}
-          {/* Password */}
-          <div>
-            <Label required>Password</Label>
-            <PasswordInput value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} placeholder="Minimum 6 characters" />
-          </div>
-          {/* Confirm Password */}
-          <div>
-            <Label required>Confirm Password</Label>
-            <PasswordInput value={form.confirm} onChange={e => setForm(p => ({ ...p, confirm: e.target.value }))} placeholder="Re-enter password" />
-          </div>
+          <div><Label required>{roleName} Name</Label><Input {...F('name')} placeholder={`Full name of ${roleName.toLowerCase()}`} /></div>
+          <div><Label>Employee ID</Label><Input {...F('employeeId')} placeholder="e.g. PU-2024-001" /></div>
+          <div className="md:col-span-2"><Label required>Email</Label><Input {...F('email')} type="email" placeholder="university email address" /></div>
+          {branches && <div><Label>Branch</Label><Select {...F('branch')}><option value="">Select Branch</option>{branches.items.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}</Select></div>}
+          {departments && <div><Label>Department</Label><Select {...F('dept')}><option value="">Select Department</option>{departments.items.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}</Select></div>}
+          <div><Label required>Password</Label><PasswordInput value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} placeholder="Minimum 6 characters" /></div>
+          <div><Label required>Confirm Password</Label><PasswordInput value={form.confirm} onChange={e => setForm(p => ({ ...p, confirm: e.target.value }))} placeholder="Re-enter password" /></div>
         </div>
-
-        {/* Password match indicator */}
         {form.password && form.confirm && (
           <div className={`flex items-center gap-1.5 text-xs mb-4 font-medium ${form.password === form.confirm ? 'text-green-600' : 'text-red-500'}`}>
-            {form.password === form.confirm
-              ? <><CheckCircle2 size={13} /> Passwords match</>
-              : <><X size={13} /> Passwords do not match</>
-            }
+            {form.password === form.confirm ? <><CheckCircle2 size={13} /> Passwords match</> : <><X size={13} /> Passwords do not match</>}
           </div>
         )}
-
         <PrimaryBtn loading={loading} onClick={handleAdd}>Add {roleName}</PrimaryBtn>
       </Card>
-
       {store.items.length > 0 && (
-        <Card>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">{roleName}s Added ({store.items.length})</h3>
-          <div className="space-y-2">
-            {store.items.map(s => (
-              <ItemRow
-                key={s.id}
-                label={s.name}
-                sub={[s.email, s.dept || s.branch].filter(Boolean).join(' • ') || null}
-                onDelete={() => store.remove(s.id)}
-              />
-            ))}
-          </div>
+        <Card><h3 className="text-sm font-semibold text-gray-700 mb-3">{roleName}s Added ({store.items.length})</h3>
+          <div className="space-y-2">{store.items.map(s => <ItemRow key={s.id} label={s.name} sub={[s.email, s.dept || s.branch].filter(Boolean).join(' • ') || null} onDelete={() => store.remove(s.id)} />)}</div>
         </Card>
       )}
     </div>
   );
 };
 
-// ════════════════════════════════════════════════════════════════════════════
-// MAIN DASHBOARD
-// ════════════════════════════════════════════════════════════════════════════
+// ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 const PuamdinDashboard = () => {
   const [active, setActive] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Local data stores (swap .add() with API.post() later)
   const colleges    = useCRUD();
   const branches    = useCRUD();
   const departments = useCRUD();
@@ -501,15 +340,15 @@ const PuamdinDashboard = () => {
 
   const renderSection = () => {
     switch (active) {
-      case 'overview':    return <OverviewSection {...{ colleges, branches, departments, courses, tutors, deans, hods, setActive }} />;
-      case 'college':     return <CollegeSection store={colleges} />;
-      case 'branch':      return <BranchSection store={branches} colleges={colleges} />;
-      case 'department':  return <DepartmentSection store={departments} branches={branches} />;
-      case 'course':      return <CourseSection store={courses} departments={departments} />;
-      case 'tutor':       return <StaffSection title="Add Tutor" subtitle="Register tutors for S18 form approval" roleName="Tutor" store={tutors} departments={departments} branches={branches} />;
-      case 'dean':        return <StaffSection title="Add Dean" subtitle="Register deans for institutional oversight" roleName="Dean" store={deans} branches={branches} departments={null} />;
-      case 'hod':         return <StaffSection title="Add HOD" subtitle="Register Heads of Department" roleName="HOD" store={hods} departments={departments} branches={branches} />;
-      default:            return null;
+      case 'overview':   return <OverviewSection {...{ colleges, branches, departments, courses, tutors, deans, hods, setActive }} />;
+      case 'college':    return <CollegeSection store={colleges} />;
+      case 'branch':     return <BranchSection store={branches} colleges={colleges} />;
+      case 'department': return <DepartmentSection store={departments} branches={branches} />;
+      case 'course':     return <CourseSection store={courses} departments={departments} />;
+      case 'tutor':      return <StaffSection title="Add Tutor" subtitle="Register tutors for S18 form approval" roleName="Tutor" store={tutors} departments={departments} branches={branches} />;
+      case 'dean':       return <StaffSection title="Add Dean" subtitle="Register deans for institutional oversight" roleName="Dean" store={deans} branches={branches} departments={null} />;
+      case 'hod':        return <StaffSection title="Add HOD" subtitle="Register Heads of Department" roleName="HOD" store={hods} departments={departments} branches={branches} />;
+      default:           return null;
     }
   };
 
@@ -519,14 +358,13 @@ const PuamdinDashboard = () => {
       <Toaster position="top-right" />
 
       <div className="flex">
-        {/* ── SIDEBAR ── */}
+        {/* ── SIDEBAR — bg-gray-50 matches main content ── */}
         <aside
-          className={`${sidebarOpen ? 'w-56' : 'w-16'} transition-all duration-200 shrink-0 bg-white border-r border-gray-100 min-h-[calc(100vh-64px)] flex flex-col pt-4`}
+          className={`${sidebarOpen ? 'w-56' : 'w-16'} transition-all duration-200 shrink-0 bg-gray-50 border-r border-gray-200 min-h-[calc(100vh-64px)] flex flex-col pt-4`}
         >
-          {/* Toggle button */}
           <button
             onClick={() => setSidebarOpen(s => !s)}
-            className="mx-auto mb-4 p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
+            className="mx-auto mb-4 p-1.5 rounded-lg text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition"
             title={sidebarOpen ? 'Collapse' : 'Expand'}
           >
             <ChevronRight size={16} className={`transition-transform ${sidebarOpen ? 'rotate-180' : ''}`} />
@@ -540,7 +378,7 @@ const PuamdinDashboard = () => {
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition
                   ${active === key
                     ? 'bg-[#3C3489] text-white shadow-sm'
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                    : 'text-gray-500 hover:bg-gray-200 hover:text-gray-700'
                   }`}
                 title={!sidebarOpen ? label : undefined}
               >
@@ -553,7 +391,6 @@ const PuamdinDashboard = () => {
 
         {/* ── MAIN CONTENT ── */}
         <main className="flex-1 px-6 py-8 max-w-4xl">
-          {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-6">
             <span>PU Admin</span>
             <ChevronRight size={12} />
@@ -561,7 +398,6 @@ const PuamdinDashboard = () => {
               {NAV_ITEMS.find(n => n.key === active)?.label || active}
             </span>
           </div>
-
           {renderSection()}
         </main>
       </div>

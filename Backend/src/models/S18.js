@@ -32,16 +32,16 @@ const s18Schema = new mongoose.Schema({
     registrationNo: String
   }],
 
-  // Documents (all 3 mandatory)
-  participantPhotoLink: { type: String, required: true },   // Photo at the event venue
-  certificateLink:      { type: String, required: true },   // Participation/achievement certificate
-  brochureLink:         { type: String, required: true },   // Program brochure
+  // Documents
+  participantPhotoLink: { type: String, required: true },
+  certificateLink:      { type: String, required: true },
+  brochureLink:         { type: String, required: true },
 
   // Parent Consent
   parentConsentReceived: { type: Boolean, default: false },
   parentMobileNo: { type: String },
 
-  // Approval Chain
+  // Approval Chain: pending → tutor_approved → hod_approved → approved / rejected
   status: {
     type: String,
     enum: ['pending', 'tutor_approved', 'hod_approved', 'approved', 'rejected'],
@@ -62,7 +62,8 @@ const s18Schema = new mongoose.Schema({
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' }
   },
 
-  proctorApproval: {
+  // Dean is the FINAL approver — includes bonus attendance
+  deanApproval: {
     approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     approvedAt: { type: Date },
     remarks: { type: String },
@@ -73,9 +74,9 @@ const s18Schema = new mongoose.Schema({
   // Post Participation
   postParticipation: {
     hardCopySubmitted: { type: Boolean, default: false },
-    softCopyEmailed: { type: Boolean, default: false },
+    softCopyEmailed:   { type: Boolean, default: false },
     finalBonusGranted: { type: Boolean, default: false },
-    finalBonusDays: { type: Number, default: 0 }
+    finalBonusDays:    { type: Number, default: 0 }
   },
 
   rejectionReason: { type: String },

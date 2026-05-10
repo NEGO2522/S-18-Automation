@@ -4,7 +4,7 @@ import API from '../utils/api';
 import toast, { Toaster } from 'react-hot-toast';
 import { CheckCircle } from 'lucide-react';
 
-const HODDashboard = () => {
+const DeanDashboard = () => {
   const [activeView, setActiveView] = useState('pending');
   const [forms, setForms] = useState([]);
   const [activityLog, setActivityLog] = useState([]);
@@ -12,6 +12,7 @@ const HODDashboard = () => {
   const [logLoading, setLogLoading] = useState(false);
   const [expandedForms, setExpandedForms] = useState({});
   const [remarks, setRemarks] = useState({});
+  const [bonusAttendance, setBonusAttendance] = useState({});
   const [rejectingForms, setRejectingForms] = useState({});
   const [actionLoading, setActionLoading] = useState({ id: null, type: null });
 
@@ -28,7 +29,7 @@ const HODDashboard = () => {
   const fetchPendingForms = async () => {
     try {
       setLoading(true);
-      const { data } = await API.get('/s18/pending/hod');
+      const { data } = await API.get('/s18/pending/dean');
       setForms(data);
     } catch (err) {
       toast.error('Could not load pending forms.');
@@ -40,7 +41,7 @@ const HODDashboard = () => {
   const fetchActivityLog = async () => {
     try {
       setLogLoading(true);
-      const { data } = await API.get('/s18/hod/acted');
+      const { data } = await API.get('/s18/dean/acted');
       setActivityLog(data);
     } catch {
       // Silently fail
@@ -53,14 +54,32 @@ const HODDashboard = () => {
     setExpandedForms(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const calculateMaxBonus = (fromDate, toDate) => {
+    if (!fromDate || !toDate) return 0;
+    const days = Math.max(1, Math.round((new Date(toDate) - new Date(fromDate)) / (1000 * 60 * 60 * 24)) + 1);
+    return days * 5;
+  };
+
   const handleApprove = async (id) => {
+    const bonus = parseInt(bonusAttendance[id] || 0);
+    if (isNaN(bonus) || bonus <= 0) {
+      toast.error('Bonus attendance days enter karna zaroori hai (> 0).');
+      return;
+    }
+    const form = forms.find(f => f._id === id);
+    const maxBonus = calculateMaxBonus(form?.fromDate, form?.toDate);
+    if (bonus > maxBonus) {
+      toast.error(`Max ${maxBonus} bonus days allowed (5 per day × ${maxBonus / 5} days).`);
+      return;
+    }
     setActionLoading({ id, type: 'approve' });
     try {
-      await API.put(`/s18/${id}/hod`, {
+      await API.put(`/s18/${id}/dean`, {
         action: 'approved',
         remarks: remarks[id] || '',
+        bonusAttendanceGranted: bonus,
       });
-      toast.success('Approved! Forward to Dean kar diya.');
+      toast.success(`Approved! ${bonus} bonus attendance days granted.`);
       setForms(prev => prev.filter(f => f._id !== id));
     } catch (err) {
       toast.error(err.response?.data?.message || 'Approve failed.');
@@ -77,7 +96,7 @@ const HODDashboard = () => {
     }
     setActionLoading({ id, type: 'reject' });
     try {
-      await API.put(`/s18/${id}/hod`, {
+      await API.put(`/s18/${id}/dean`, {
         action: 'rejected',
         remarks: remarks[id],
       });
@@ -108,7 +127,7 @@ const HODDashboard = () => {
         {/* HEADER */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-800">HOD Dashboard</h1>
+            <h1 className="text-2xl font-semibold text-gray-800">Dean Dashboard</h1>
             <p className="text-sm text-gray-500 mt-1">S18 forms pending your verification</p>
           </div>
           {activeView === 'pending' && !loading && forms.length > 0 && (
@@ -177,14 +196,22 @@ const HODDashboard = () => {
                             {form.registrationNo} • {form.course || '—'} • {form.branch} • {form.year}
                           </p>
                         </div>
-                        <span className="bg-blue-100 text-blue-700 text-xs px-2.5 py-1 rounded-full font-semibold shrink-0">
-                          Tutor Approved
+                        <span className="bg-indigo-100 text-indigo-700 text-xs px-2.5 py-1 rounded-full font-semibold shrink-0">
+                          HOD Approved
                         </span>
                       </div>
 
+                      {/* HOD REMARKS */}
+                      {form.hodApproval?.remarks && (
+                        <div className="mt-3 bg-indigo-50 rounded-lg px-3 py-2 text-sm text-indigo-700">
+                          <span className="font-semibold">HOD Remarks: </span>
+                          {form.hodApproval.remarks}
+                        </div>
+                      )}
+
                       {/* TUTOR REMARKS */}
                       {form.tutorApproval?.remarks && (
-                        <div className="mt-3 bg-blue-50 rounded-lg px-3 py-2 text-sm text-blue-700">
+                        <div className="mt-2 bg-blue-50 rounded-lg px-3 py-2 text-sm text-blue-700">
                           <span className="font-semibold">Tutor Remarks: </span>
                           {form.tutorApproval.remarks}
                         </div>
@@ -295,8 +322,52 @@ const HODDashboard = () => {
                             <span className="text-gray-400 text-xs uppercase tracking-wide block">Campus</span>
                             <span className="font-medium text-gray-800">{form.campus || '—'}</span>
                           </div>
+                          {/* Approval Chain */}
+                          <div className="col-span-2 mt-1">
+                            <span className="text-gray-400 text-xs uppercase tracking-wide block mb-2">Approval Chain</span>
+                            <div className="flex items-center gap-2 mb-1">
+                              <CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                              <span className="text-gray-700 text-xs">
+                                Tutor: {form.tutorApproval?.approvedBy?.name || '—'}
+                                <span className="text-gray-400 ml-2">{formatDate(form.tutorApproval?.approvedAt)}</span>
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                              <span className="text-gray-700 text-xs">
+                                HOD: {form.hodApproval?.approvedBy?.name || '—'}
+                                <span className="text-gray-400 ml-2">{formatDate(form.hodApproval?.approvedAt)}</span>
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       )}
+
+                      {/* BONUS ATTENDANCE INPUT — only shown when not rejecting */}
+                      {!rejectingForms[id] && (() => {
+                        const maxBonus = calculateMaxBonus(form.fromDate, form.toDate);
+                        const durationDays = maxBonus / 5;
+                        return (
+                          <div className="mt-4 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                            <label className="block text-sm font-semibold text-indigo-800 mb-1">
+                              Bonus Attendance Days to Grant <span className="text-red-500">*</span>
+                            </label>
+                            <p className="text-xs text-indigo-500 mb-2">
+                              Event duration: {durationDays} day{durationDays !== 1 ? 's' : ''} · Max allowed: {maxBonus} days (5 per day)
+                            </p>
+                            <input
+                              type="number"
+                              min="1"
+                              max={maxBonus}
+                              value={bonusAttendance[id] || ''}
+                              onChange={e => setBonusAttendance(prev => ({ ...prev, [id]: e.target.value }))}
+                              placeholder={`Enter 1–${maxBonus}`}
+                              className="w-36 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3C3489] bg-white"
+                              disabled={isAnyLoading}
+                            />
+                          </div>
+                        );
+                      })()}
 
                       {/* REJECT REMARKS */}
                       {rejectingForms[id] && (
@@ -317,15 +388,15 @@ const HODDashboard = () => {
 
                       {/* OPTIONAL REMARKS for approval */}
                       {!rejectingForms[id] && (
-                        <div className="mt-4">
+                        <div className="mt-3">
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Remarks <span className="text-gray-400 font-normal">(optional — for approval)</span>
+                            Dean Remarks <span className="text-gray-400 font-normal">(optional)</span>
                           </label>
                           <input
                             type="text"
                             value={remarks[id] || ''}
                             onChange={e => setRemarks(prev => ({ ...prev, [id]: e.target.value }))}
-                            placeholder="Any notes for Dean..."
+                            placeholder="Any additional notes..."
                             className="border border-gray-200 rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-[#3C3489] bg-white"
                             disabled={isAnyLoading}
                           />
@@ -342,7 +413,7 @@ const HODDashboard = () => {
                           {isLoadingApprove ? (
                             <><Spinner color="white" /> Approving...</>
                           ) : (
-                            <><svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg> Approve & Forward to Dean</>
+                            <><svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg> Grant Final Approval</>
                           )}
                         </button>
                         <button
@@ -384,7 +455,7 @@ const HODDashboard = () => {
             {!logLoading && activityLog.length > 0 && (
               <div className="space-y-3">
                 {activityLog.map(item => {
-                  const approved = item.hodApproval?.status === 'approved';
+                  const approved = item.deanApproval?.status === 'approved';
                   return (
                     <div key={item._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
                       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -393,8 +464,13 @@ const HODDashboard = () => {
                           <p className="text-sm text-gray-500">
                             {item.registrationNo} • {item.course || '—'} • {item.branch || '—'} • {item.activityName}
                           </p>
-                          {item.hodApproval?.remarks && (
-                            <p className="text-sm text-gray-400 mt-1 italic">"{item.hodApproval.remarks}"</p>
+                          {item.deanApproval?.bonusAttendanceGranted > 0 && (
+                            <p className="text-sm text-indigo-600 font-semibold mt-1">
+                              +{item.deanApproval.bonusAttendanceGranted} bonus attendance days
+                            </p>
+                          )}
+                          {item.deanApproval?.remarks && (
+                            <p className="text-sm text-gray-400 mt-1 italic">"{item.deanApproval.remarks}"</p>
                           )}
                         </div>
                         <div className="text-right shrink-0">
@@ -404,7 +480,7 @@ const HODDashboard = () => {
                             {approved ? 'Approved' : 'Rejected'}
                           </span>
                           <p className="text-xs text-gray-400 mt-2">
-                            {formatDate(item.hodApproval?.approvedAt)}
+                            {formatDate(item.deanApproval?.approvedAt)}
                           </p>
                         </div>
                       </div>
@@ -428,4 +504,4 @@ const Spinner = ({ color = 'white' }) => (
   </svg>
 );
 
-export default HODDashboard;
+export default DeanDashboard;

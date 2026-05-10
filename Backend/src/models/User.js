@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
   profilePic: { type: String, default: '' },
   role: {
     type: String,
-    enum: ['student', 'tutor', 'hod', 'chief_proctor'],
+    enum: ['student', 'tutor', 'hod', 'dean', 'chief_proctor'],
     default: 'student',
   },
   // Student fields

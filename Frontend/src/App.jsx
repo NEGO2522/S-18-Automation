@@ -6,7 +6,7 @@ import AuthCallback from './pages/AuthCallback.jsx';
 import StudentDashboard from './pages/StudentDashboard.jsx';
 import TutorDashboard from './pages/TutorDashboard.jsx';
 import HODDashboard from './pages/HODDashboard.jsx';
-import ProctorDashboard from './pages/ProctorDashboard.jsx';
+import DeanDashboard from './pages/DeanDashboard.jsx';
 import PuamdinDashboard from './pages/PuamdinDashboard.jsx';
 
 function App() {
@@ -15,41 +15,14 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route
-        path="/dashboard/student"
-        element={
-          <ProtectedRoute role="student">
-            <StudentDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/tutor"
-        element={
-          <ProtectedRoute role="tutor">
-            <TutorDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/hod"
-        element={
-          <ProtectedRoute role="hod">
-            <HODDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/proctor"
-        element={
-          <ProtectedRoute role="chief_proctor">
-            <ProctorDashboard />
-          </ProtectedRoute>
-        }
-      />
 
-      {/* Puamdin dashboard — publicly accessible, no login required */}
-      <Route path="/dashboard/puamdin" element={<PuamdinDashboard />} />
+      <Route path="/dashboard/student" element={<ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>} />
+      <Route path="/dashboard/tutor"   element={<ProtectedRoute role="tutor"><TutorDashboard /></ProtectedRoute>} />
+      <Route path="/dashboard/hod"     element={<ProtectedRoute role="hod"><HODDashboard /></ProtectedRoute>} />
+      <Route path="/dashboard/dean"    element={<ProtectedRoute role="dean"><DeanDashboard /></ProtectedRoute>} />
+
+      {/* Admin — publicly accessible */}
+      <Route path="/dashboard/admin" element={<PuamdinDashboard />} />
 
       <Route path="/" element={<Navigate to="/login" replace />} />
     </Routes>

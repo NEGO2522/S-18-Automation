@@ -95,12 +95,13 @@ const Select = ({ children, name, value, onChange }) => {
 };
 
 const StudentDashboard = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [activeTab, setActiveTab] = useState('new');
   const [loading, setLoading] = useState(false);
   const [myRequests, setMyRequests] = useState([]);
   const [requestsLoaded, setRequestsLoaded] = useState(false);
   const [expandedReq, setExpandedReq] = useState(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(null);
 
   const [formData, setFormData] = useState({
     studentName: user?.name || '',
@@ -155,6 +156,34 @@ const StudentDashboard = () => {
     } catch {
       toast.error('Could not load your requests.');
       setRequestsLoaded(true);
+    }
+  };
+
+  const handleDownloadPDF = async (reqId, registrationNo) => {
+    setDownloadingPdf(reqId);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/s18/${reqId}/pdf`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || 'Download failed');
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `S18_Approval_${registrationNo}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success('Approval letter downloaded!');
+    } catch (err) {
+      toast.error(err.message || 'PDF download failed. Try again.');
+    } finally {
+      setDownloadingPdf(null);
     }
   };
 
@@ -675,6 +704,37 @@ const StudentDashboard = () => {
                       }}>
                         {cfg.label}
                       </span>
+                      {req.status === 'approved' && (
+                        <button
+                          onClick={e => { e.stopPropagation(); handleDownloadPDF(req._id, req.registrationNo); }}
+                          disabled={downloadingPdf === req._id}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 6,
+                            padding: '6px 14px', borderRadius: 8, border: 'none', cursor: downloadingPdf === req._id ? 'not-allowed' : 'pointer',
+                            background: '#3C3489', color: '#fff', fontSize: 12, fontWeight: 600,
+                            opacity: downloadingPdf === req._id ? 0.7 : 1,
+                            boxShadow: '0 2px 8px rgba(60,52,137,0.3)', whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {downloadingPdf === req._id ? (
+                            <>
+                              <span style={{
+                                width: 11, height: 11, border: '2px solid rgba(255,255,255,0.4)',
+                                borderTopColor: '#fff', borderRadius: '50%',
+                                display: 'inline-block', animation: 'spin 0.6s linear infinite'
+                              }} />
+                              Downloading...
+                            </>
+                          ) : (
+                            <>
+                              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                              </svg>
+                              Approval Letter
+                            </>
+                          )}
+                        </button>
+                      )}
                       <svg width="14" height="14" fill="none" stroke="#9895B5" viewBox="0 0 24 24" strokeWidth="2"
                         style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s', flexShrink: 0 }}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -773,7 +833,7 @@ const StudentDashboard = () => {
                         {[
                           ['Tutor', ['tutor_approved', 'hod_approved', 'approved']],
                           ['HOD', ['hod_approved', 'approved']],
-                          ['Chief Proctor', ['approved']],
+                          ['Dean', ['approved']],
                         ].map(([role, doneStatuses], stepIdx, arr) => {
                           const done = doneStatuses.includes(req.status);
                           const isFirstPending = !done && (stepIdx === 0 || arr[stepIdx - 1][1].includes(req.status));

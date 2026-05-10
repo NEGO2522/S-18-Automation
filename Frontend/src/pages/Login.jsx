@@ -17,11 +17,11 @@ const BG2 = 'https://content.jdmagicbox.com/comp/jaipur/g3/0141px141.x141.230201
 const BG1 = 'https://poornima.edu.in/assets/images/Online_meta.png';
 
 const ROLE_ROUTES = {
-  student:      '/dashboard/student',
-  tutor:        '/dashboard/tutor',
-  hod:          '/dashboard/hod',
-  chief_proctor:'/dashboard/proctor',
-  puamdin:      '/dashboard/puamdin',
+  student: '/dashboard/student',
+  tutor:   '/dashboard/tutor',
+  hod:     '/dashboard/hod',
+  dean:    '/dashboard/dean',
+  puamdin: '/dashboard/admin',
 };
 
 function Login() {
@@ -31,7 +31,6 @@ function Login() {
 
   const error = searchParams.get('error');
 
-  // Staff login state
   const [showStaffLogin, setShowStaffLogin] = useState(false);
   const [staffEmail, setStaffEmail] = useState('');
   const [staffPassword, setStaffPassword] = useState('');
@@ -39,13 +38,12 @@ function Login() {
   const [staffLoading, setStaffLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // ── GUARD: agar already logged in hai to seedha dashboard pe bhejo ──
+  // ── GUARD: already logged in → apne dashboard pe bhejo ──
   if (!loading && user) {
     const dest = ROLE_ROUTES[user.role] || '/dashboard/student';
     return <Navigate to={dest} replace />;
   }
 
-  // Auth context abhi localStorage load kar raha hai — wait karo
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -70,22 +68,18 @@ function Login() {
     e.preventDefault();
     setStaffError('');
     setStaffLoading(true);
-
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/staff-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: staffEmail, password: staffPassword }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         setStaffError(data.message || 'Login failed. Please try again.');
         setStaffLoading(false);
         return;
       }
-
       login(data.user, data.token);
       navigate(ROLE_ROUTES[data.user.role] || '/login', { replace: true });
     } catch {
@@ -162,7 +156,7 @@ function Login() {
           <div className="flex flex-col gap-3">
             {[
               { num: '01', text: 'Online S18 form submit karo' },
-              { num: '02', text: 'Tutor → HOD → Chief Proctor digital approval' },
+              { num: '02', text: 'Tutor → HOD → Dean digital approval' },
               { num: '03', text: 'Bonus attendance auto credit' },
             ].map((s) => (
               <div key={s.num} className="flex items-center gap-4">
@@ -207,166 +201,94 @@ function Login() {
                 {showStaffLogin ? 'Staff Login' : 'Welcome Back'}
               </h2>
               <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                {showStaffLogin
-                  ? 'HOD / Tutor / Chief Proctor'
-                  : 'Sign in with your university account'}
+                {showStaffLogin ? 'Tutor / HOD / Dean' : 'Sign in with your university account'}
               </p>
             </div>
 
-            {/* URL-level error (Google OAuth errors) */}
+            {/* URL-level error */}
             {error && !showStaffLogin && (
               <div
                 className="rounded-xl p-4 mb-6 flex items-start gap-3 text-sm"
-                style={{
-                  background: 'rgba(239,68,68,0.10)',
-                  border: '1px solid rgba(239,68,68,0.25)',
-                  color: '#fca5a5',
-                }}
+                style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)', color: '#fca5a5' }}
               >
                 <span className="mt-0.5">⚠️</span>
                 <span>
-                  {error === 'invalid_domain'
-                    ? 'Only @poornima.edu.in accounts are allowed.'
-                    : error === 'auth_failed'
-                    ? 'Google login failed. Please try again.'
+                  {error === 'invalid_domain' ? 'Only @poornima.edu.in accounts are allowed.'
+                    : error === 'auth_failed' ? 'Google login failed. Please try again.'
                     : decodeURIComponent(error)}
                 </span>
               </div>
             )}
 
-            {/* ── STUDENT VIEW: Google login ── */}
+            {/* ── STUDENT VIEW ── */}
             {!showStaffLogin && (
               <>
                 <button
                   onClick={handleGoogleLogin}
                   className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl font-medium transition-all duration-150 focus:outline-none"
-                  style={{
-                    background: 'rgba(255,255,255,0.09)',
-                    border: '1px solid rgba(255,255,255,0.16)',
-                    color: 'rgba(255,255,255,0.88)',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.26)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.09)';
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.16)';
-                  }}
+                  style={{ background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.16)', color: 'rgba(255,255,255,0.88)' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.26)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.09)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.16)'; }}
                 >
                   <GoogleIcon />
                   Continue with Google
                 </button>
-
                 <div className="mt-4 text-center">
                   <p className="text-xs" style={{ color: 'rgba(255,255,255,0.22)' }}>
-                    Restricted to{' '}
-                    <span style={{ color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>
-                      @poornima.edu.in
-                    </span>
+                    Restricted to <span style={{ color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>@poornima.edu.in</span>
                   </p>
                 </div>
-
-                {/* Divider */}
                 <div className="flex items-center gap-3 my-6">
                   <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.10)' }} />
                   <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>or</span>
                   <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.10)' }} />
                 </div>
-
-                {/* Staff Login toggle button */}
                 <button
                   onClick={() => setShowStaffLogin(true)}
                   className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-150 focus:outline-none"
-                  style={{
-                    background: 'rgba(167,139,250,0.10)',
-                    border: '1px solid rgba(167,139,250,0.22)',
-                    color: '#c4b5fd',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = 'rgba(167,139,250,0.18)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = 'rgba(167,139,250,0.10)';
-                  }}
+                  style={{ background: 'rgba(167,139,250,0.10)', border: '1px solid rgba(167,139,250,0.22)', color: '#c4b5fd' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(167,139,250,0.18)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(167,139,250,0.10)'}
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                   </svg>
                   Staff Login
                 </button>
               </>
             )}
 
-            {/* ── STAFF VIEW: Email + Password form ── */}
+            {/* ── STAFF VIEW ── */}
             {showStaffLogin && (
               <form onSubmit={handleStaffLogin} className="flex flex-col gap-4">
-
-                {/* Staff error */}
                 {staffError && (
-                  <div
-                    className="rounded-xl p-3 flex items-start gap-2 text-sm"
-                    style={{
-                      background: 'rgba(239,68,68,0.10)',
-                      border: '1px solid rgba(239,68,68,0.25)',
-                      color: '#fca5a5',
-                    }}
-                  >
-                    <span>⚠️</span>
-                    <span>{staffError}</span>
+                  <div className="rounded-xl p-3 flex items-start gap-2 text-sm" style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)', color: '#fca5a5' }}>
+                    <span>⚠️</span><span>{staffError}</span>
                   </div>
                 )}
-
-                {/* Email */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                    Email Address
-                  </label>
+                  <label className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>Email Address</label>
                   <input
-                    type="email"
-                    value={staffEmail}
-                    onChange={e => setStaffEmail(e.target.value)}
-                    placeholder="yourname@poornima.edu.in"
-                    required
+                    type="email" value={staffEmail} onChange={e => setStaffEmail(e.target.value)}
+                    placeholder="yourname@poornima.edu.in" required
                     className="w-full py-2.5 px-4 rounded-xl text-sm outline-none transition-all"
-                    style={{
-                      background: 'rgba(255,255,255,0.07)',
-                      border: '1px solid rgba(255,255,255,0.14)',
-                      color: 'rgba(255,255,255,0.88)',
-                    }}
+                    style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.88)' }}
                     onFocus={e => e.target.style.borderColor = 'rgba(167,139,250,0.5)'}
                     onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.14)'}
                   />
                 </div>
-
-                {/* Password */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                    Password
-                  </label>
+                  <label className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>Password</label>
                   <div className="relative">
                     <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={staffPassword}
-                      onChange={e => setStaffPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      required
+                      type={showPassword ? 'text' : 'password'} value={staffPassword} onChange={e => setStaffPassword(e.target.value)}
+                      placeholder="Enter your password" required
                       className="w-full py-2.5 px-4 pr-10 rounded-xl text-sm outline-none transition-all"
-                      style={{
-                        background: 'rgba(255,255,255,0.07)',
-                        border: '1px solid rgba(255,255,255,0.14)',
-                        color: 'rgba(255,255,255,0.88)',
-                      }}
+                      style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.88)' }}
                       onFocus={e => e.target.style.borderColor = 'rgba(167,139,250,0.5)'}
                       onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.14)'}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(p => !p)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs"
-                      style={{ color: 'rgba(255,255,255,0.35)' }}
-                    >
+                    <button type="button" onClick={() => setShowPassword(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(255,255,255,0.35)' }}>
                       {showPassword ? (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
@@ -375,37 +297,22 @@ function Login() {
                         </svg>
                       ) : (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                          <circle cx="12" cy="12" r="3"/>
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                         </svg>
                       )}
                     </button>
                   </div>
                 </div>
-
-                {/* Submit */}
                 <button
-                  type="submit"
-                  disabled={staffLoading}
+                  type="submit" disabled={staffLoading}
                   className="w-full py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-150 mt-1"
-                  style={{
-                    background: staffLoading ? 'rgba(167,139,250,0.3)' : 'rgba(167,139,250,0.85)',
-                    color: 'white',
-                    cursor: staffLoading ? 'not-allowed' : 'pointer',
-                  }}
+                  style={{ background: staffLoading ? 'rgba(167,139,250,0.3)' : 'rgba(167,139,250,0.85)', color: 'white', cursor: staffLoading ? 'not-allowed' : 'pointer' }}
                 >
                   {staffLoading ? 'Logging in...' : 'Sign In'}
                 </button>
-
-                {/* Back to student login */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowStaffLogin(false);
-                    setStaffError('');
-                    setStaffEmail('');
-                    setStaffPassword('');
-                  }}
+                  onClick={() => { setShowStaffLogin(false); setStaffError(''); setStaffEmail(''); setStaffPassword(''); }}
                   className="w-full text-center text-sm mt-1 transition-opacity"
                   style={{ color: 'rgba(255,255,255,0.35)' }}
                   onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.65)'}
@@ -416,14 +323,12 @@ function Login() {
               </form>
             )}
 
-            {/* Register link — show only on student view */}
+            {/* Register link */}
             {!showStaffLogin && (
               <div className="mt-6 text-center border-t border-white/10 pt-5">
                 <p className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
                   New staff member?{' '}
-                  <a href="/register" className="font-semibold text-white hover:underline">
-                    Register here
-                  </a>
+                  <a href="/register" className="font-semibold text-white hover:underline">Register here</a>
                 </p>
               </div>
             )}
@@ -431,16 +336,10 @@ function Login() {
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3 mt-6">
-            {[
-              { val: 'S18', label: 'Form Online' },
-              { val: '4x', label: 'Faster' },
-              { val: '0', label: 'Paperwork' },
-            ].map((s, i) => (
+            {[{ val: 'S18', label: 'Form Online' }, { val: '4x', label: 'Faster' }, { val: '0', label: 'Paperwork' }].map((s, i) => (
               <div key={i} className="text-center">
                 <div className="text-white font-bold text-lg">{s.val}</div>
-                <div className="text-xs mt-1 uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.28)' }}>
-                  {s.label}
-                </div>
+                <div className="text-xs mt-1 uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.28)' }}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -449,9 +348,7 @@ function Login() {
 
       {/* Footer */}
       <div className="absolute bottom-5 left-0 right-0 flex justify-center z-10">
-        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.18)' }}>
-          2025 Poornima University - Jaipur, Rajasthan
-        </p>
+        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.18)' }}>2025 Poornima University - Jaipur, Rajasthan</p>
       </div>
     </div>
   );
