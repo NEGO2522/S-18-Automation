@@ -33,6 +33,19 @@ const getTutorActed = async (req, res) => {
   }
 };
 
+// GET /api/s18/hod/acted — Forms HOD has already approved or rejected
+const getHODActed = async (req, res) => {
+  try {
+    const forms = await S18.find({
+      'hodApproval.approvedBy': req.user._id,
+      status: { $in: ['hod_approved', 'approved', 'rejected'] }
+    }).sort({ 'hodApproval.approvedAt': -1 });
+    res.json(forms);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // GET /api/s18/pending/tutor — Tutor sees pending forms
 const getPendingForTutor = async (req, res) => {
   try {
@@ -143,7 +156,7 @@ const getFormById = async (req, res) => {
 };
 
 module.exports = {
-  submitForm, getMyForms, getTutorActed, getPendingForTutor,
+  submitForm, getMyForms, getTutorActed, getHODActed, getPendingForTutor,
   getPendingForHOD, getPendingForProctor,
   tutorAction, hodAction, proctorAction, getFormById
 };
