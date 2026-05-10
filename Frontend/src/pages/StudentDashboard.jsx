@@ -13,6 +13,7 @@ const StudentDashboard = () => {
   const [activeTab, setActiveTab] = useState('new');
   const [loading, setLoading] = useState(false);
   const [myRequests, setMyRequests] = useState([]);
+  const [requestsLoaded, setRequestsLoaded] = useState(false);
   const [expandedReq, setExpandedReq] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -55,12 +56,18 @@ const StudentDashboard = () => {
     if (activeTab === 'my-requests') fetchMyRequests();
   }, [activeTab]);
 
+  useEffect(() => {
+    fetchMyRequests();
+  }, []);
+
   const fetchMyRequests = async () => {
     try {
       const { data } = await API.get('/s18/my');
       setMyRequests(data);
+      setRequestsLoaded(true);
     } catch {
       toast.error('Could not load your requests.');
+      setRequestsLoaded(true);
     }
   };
 
@@ -171,6 +178,7 @@ const StudentDashboard = () => {
       }
 
       toast.success('S18 Request submitted successfully!');
+      await fetchMyRequests();
       setActiveTab('my-requests');
 
       // Reset form
@@ -226,7 +234,7 @@ const StudentDashboard = () => {
             display: 'inline-flex', background: '#EEEDFE', borderRadius: 12,
             padding: 4, gap: 2
           }}>
-            {[['new', 'New Request'], ['my-requests', `My Requests (${myRequests.length})`]].map(([key, label]) => (
+            {[['new', 'New Request'], ['my-requests', requestsLoaded ? `My Requests (${myRequests.length})` : 'My Requests']].map(([key, label]) => (
               <button key={key} onClick={() => setActiveTab(key)} style={{
                 padding: '8px 20px', borderRadius: 9, border: 'none', cursor: 'pointer',
                 fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
