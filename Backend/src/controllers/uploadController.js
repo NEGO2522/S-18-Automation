@@ -1,32 +1,38 @@
 const UploadedFile = require('../models/UploadedFile');
+const { uploadToCloudinary } = require('../config/cloudinary');
 
-/**
- * POST /api/upload/:type
- * type = brochure | certificate | photo
- *
- * Multer + Cloudinary middleware runs BEFORE this controller,
- * so by the time we reach here req.file is already uploaded to Cloudinary.
- *
- * Returns: { url, publicId, fileId } back to frontend
- */
+const FOLDER_MAP = {
+  brochure:    'brochures',
+  photo:       'photos',
+  certificate: 'certificates',
+};
+
 const uploadFile = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded.' });
     }
 
-    const { type } = req.params;
+    const type = req.params.type || req.path.replace('/', '');
+    const validTypes = ['brochure', 'photo', 'certificate'];
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({ message: `Invalid upload type: ${type}` });
+    }
+    const folder = FOLDER_MAP[type] || 'others';
 
-    // Save record to UploadedFile collection
+    // Upload buffer to Cloudinary
+    const result = await uploadToCloudinary(req.file.buffer, folder, req.file.mimetype);
+
+    // Save record to MongoDB
     const record = await UploadedFile.create({
       uploadedBy:         req.user._id,
       fileType:           type,
       originalName:       req.file.originalname,
       mimeType:           req.file.mimetype,
       sizeBytes:          req.file.size,
-      cloudinaryPublicId: req.file.filename,   // multer-storage-cloudinary sets this
-      cloudinaryUrl:      req.file.path,        // secure_url from Cloudinary
-      resourceType:       req.file.mimetype === 'application/pdf' ? 'raw' : 'image',
+      cloudinaryPublicId: result.public_id,
+      cloudinaryUrl:      result.secure_url,
+      resourceType:       result.resource_type,
       attachedToForm:     false,
     });
 
@@ -38,15 +44,10 @@ const uploadFile = async (req, res) => {
 
   } catch (err) {
     console.error('Upload error:', err);
-    res.status(500).json({ message: 'File upload failed. Try again.' });
+    res.status(500).json({ message: err.message || 'File upload failed.' });
   }
 };
 
-/**
- * PATCH /api/upload/attach
- * Called after form submission to mark files as attached and link them to the form.
- * Body: { fileIds: [...], s18FormId: '...' }
- */
 const attachFilesToForm = async (req, res) => {
   try {
     const { fileIds, s18FormId } = req.body;

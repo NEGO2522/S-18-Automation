@@ -1,5 +1,4 @@
 const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 
 cloudinary.config({
@@ -8,28 +7,38 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// One storage per document type — keeps Cloudinary folders clean
-const makeStorage = (folder) =>
-  new CloudinaryStorage({
-    cloudinary,
-    params: async (req, file) => {
-      // PDFs must be uploaded as 'raw', images as 'image'
-      const isPdf = file.mimetype === 'application/pdf';
-      return {
+// Store file in memory buffer first, then we stream to Cloudinary manually
+// This avoids multer-storage-cloudinary version compatibility issues entirely
+const memoryStorage = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only JPG, PNG, WEBP, and PDF files are allowed.'), false);
+    }
+  },
+});
+
+// Helper: upload buffer to Cloudinary via stream
+const uploadToCloudinary = (buffer, folder, mimetype) => {
+  return new Promise((resolve, reject) => {
+    const isPdf = mimetype === 'application/pdf';
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
         folder: `s18/${folder}`,
         resource_type: isPdf ? 'raw' : 'image',
-        allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
-        public_id: `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`,
-      };
-    },
+        public_id: `${Date.now()}`,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+    uploadStream.end(buffer);
   });
+};
 
-const uploadBrochure     = multer({ storage: makeStorage('brochures') });
-const uploadPhoto        = multer({ storage: makeStorage('photos') });
-const uploadCertificate  = multer({ storage: makeStorage('certificates') });
-
-// Generic single-file uploader (used when uploading one at a time)
-const uploadSingle = (fieldName, folder) =>
-  multer({ storage: makeStorage(folder) }).single(fieldName);
-
-module.exports = { cloudinary, uploadBrochure, uploadPhoto, uploadCertificate, uploadSingle };
+module.exports = { memoryStorage, uploadToCloudinary, cloudinary };

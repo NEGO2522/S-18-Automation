@@ -2,49 +2,23 @@ const express = require('express');
 const router = express.Router();
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 const { uploadFile, attachFilesToForm } = require('../controllers/uploadController');
-const { uploadSingle } = require('../config/cloudinary');
+const { memoryStorage } = require('../config/cloudinary');
 
-/**
- * POST /api/upload/brochure
- * POST /api/upload/certificate
- * POST /api/upload/photo
- *
- * Only students can upload (they're the ones submitting forms).
- * Each route accepts a single file with the field name 'file'.
- */
-router.post(
-  '/brochure',
-  protect,
-  authorizeRoles('student'),
-  uploadSingle('file', 'brochures'),
-  uploadFile
-);
+const upload = memoryStorage.single('file');
 
-router.post(
-  '/certificate',
-  protect,
-  authorizeRoles('student'),
-  uploadSingle('file', 'certificates'),
-  uploadFile
-);
+const handleUpload = (req, res, next) => {
+  upload(req, res, (err) => {
+    if (err) return res.status(400).json({ message: err.message });
+    next();
+  });
+};
 
-router.post(
-  '/photo',
-  protect,
-  authorizeRoles('student'),
-  uploadSingle('file', 'photos'),
-  uploadFile
-);
+// POST /api/upload/brochure
+// POST /api/upload/photo
+// POST /api/upload/certificate
+router.post('/:type', protect, authorizeRoles('student'), handleUpload, uploadFile);
 
-/**
- * PATCH /api/upload/attach
- * Called after S18 form is submitted — links uploaded files to the form record.
- */
-router.patch(
-  '/attach',
-  protect,
-  authorizeRoles('student'),
-  attachFilesToForm
-);
+// PATCH /api/upload/attach
+router.patch('/attach', protect, authorizeRoles('student'), attachFilesToForm);
 
 module.exports = router;
