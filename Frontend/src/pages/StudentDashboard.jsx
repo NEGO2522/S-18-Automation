@@ -8,6 +8,92 @@ const PU_PURPLE = '#3C3489';
 const PU_PURPLE_DARK = '#2A2362';
 const PU_PURPLE_LIGHT = '#EEEDFE';
 
+const baseInputStyle = {
+  width: '100%', padding: '9px 12px', borderRadius: 9, fontSize: 13.5,
+  border: '0.5px solid #D0CEF0', outline: 'none', background: 'white',
+  color: '#1A1640', transition: 'border-color 0.15s', boxSizing: 'border-box',
+  fontFamily: 'inherit',
+};
+
+const Select = ({ children, name, value, onChange }) => {
+  const [open, setOpen] = useState(false);
+  const [animating, setAnimating] = useState(false);
+  const ref = useRef(null);
+
+  const options = React.Children.toArray(children).map(child => ({
+    value: child.props.value ?? child.props.children,
+    label: child.props.children,
+  }));
+
+  const selectedLabel = options.find(o => o.value === value)?.label || options[0]?.label || '';
+
+  const openDropdown = () => { setAnimating(true); setOpen(true); };
+  const closeDropdown = () => { setAnimating(false); setTimeout(() => setOpen(false), 180); };
+  const handleSelect = (e, optValue) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onChange({ target: { name, value: optValue } });
+    closeDropdown();
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) closeDropdown(); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: 'relative', width: '100%' }}>
+      <div
+        onClick={() => open ? closeDropdown() : openDropdown()}
+        style={{
+          ...baseInputStyle,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          cursor: 'pointer', userSelect: 'none',
+          borderColor: open ? '#3C3489' : '#D0CEF0',
+          color: value ? '#1A1640' : '#9895B5',
+        }}
+      >
+        <span>{selectedLabel}</span>
+        <svg width="12" height="12" fill="none" stroke="#9895B5" viewBox="0 0 24 24" strokeWidth="2"
+          style={{ transition: 'transform 0.2s ease', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
+          background: 'white', borderRadius: 10, border: '0.5px solid #CECBF6',
+          boxShadow: '0 8px 24px rgba(60,52,137,0.12)',
+          zIndex: 999, overflow: 'hidden', transformOrigin: 'top',
+          animation: animating ? 'dropdownOpen 0.18s ease forwards' : 'dropdownClose 0.18s ease forwards',
+        }}>
+          {options.map((opt, i) => (
+            <div key={i}
+              onMouseDown={(e) => handleSelect(e, opt.value)}
+              onClick={(e) => handleSelect(e, opt.value)}
+              style={{
+                padding: '9px 13px', fontSize: 13.5, cursor: 'pointer',
+                color: opt.value === value ? '#3C3489' : '#1A1640',
+                background: opt.value === value ? '#EEEDFE' : 'white',
+                fontWeight: opt.value === value ? 600 : 400,
+                transition: 'background 0.1s',
+              }}
+              onMouseEnter={e => { if (opt.value !== value) e.currentTarget.style.background = '#F7F6FD'; }}
+              onMouseLeave={e => { if (opt.value !== value) e.currentTarget.style.background = 'white'; }}
+            >{opt.label}</div>
+          ))}
+        </div>
+      )}
+      <style>{`
+        @keyframes dropdownOpen { from { opacity:0; transform:scaleY(0.85) translateY(-6px); } to { opacity:1; transform:scaleY(1) translateY(0); } }
+        @keyframes dropdownClose { from { opacity:1; transform:scaleY(1) translateY(0); } to { opacity:0; transform:scaleY(0.85) translateY(-6px); } }
+      `}</style>
+    </div>
+  );
+};
+
 const StudentDashboard = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('new');
@@ -30,6 +116,7 @@ const StudentDashboard = () => {
     activityName: '',
     organizingInstitution: '',
     activityType: '',
+    activityTypeOther: '',
     startDate: '',
     endDate: '',
     numberOfTeamMembers: '0',
@@ -141,6 +228,14 @@ const StudentDashboard = () => {
       toast.error('You must agree to the student undertaking before submitting.');
       return;
     }
+    if (!formData.course) {
+      toast.error('Please select a course.');
+      return;
+    }
+    if (formData.activityType === 'Other' && !formData.activityTypeOther.trim()) {
+      toast.error('Please specify the activity type.');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -159,6 +254,7 @@ const StudentDashboard = () => {
         activityName:         formData.activityName,
         organizingInstitution:formData.organizingInstitution,
         activityType:         formData.activityType,
+        activityTypeOther:    formData.activityType === 'Other' ? formData.activityTypeOther : '',
         fromDate:             formData.startDate,
         toDate:               formData.endDate,
         teamMembers:          formData.teamMembers.slice(0, numMembers),
@@ -186,7 +282,7 @@ const StudentDashboard = () => {
         ...p,
         registrationNo: '', course: '', campus: '', year: '', branch: '',
         mobileNo: '', cumulativeAttendance: '', lastParticipation: '',
-        activityName: '', organizingInstitution: '', activityType: '',
+        activityName: '', organizingInstitution: '', activityType: '', activityTypeOther: '',
         startDate: '', endDate: '', numberOfTeamMembers: '0',
         teamMembers: [
           { name: '', registrationNo: '' },
@@ -346,6 +442,16 @@ const StudentDashboard = () => {
                     </Select>
                   </Field>
                 </Grid>
+                {formData.activityType === 'Other' && (
+                  <Field label="Please specify activity type" required>
+                    <Input
+                      name="activityTypeOther"
+                      value={formData.activityTypeOther || ''}
+                      onChange={handleChange}
+                      placeholder="Describe the activity type..."
+                    />
+                  </Field>
+                )}
                 <Grid cols={2}>
                   <Field label="From Date" required>
                     <Input name="startDate" type="date" value={formData.startDate} onChange={handleChange} />
@@ -362,7 +468,6 @@ const StudentDashboard = () => {
                 <Field label="Team members joining (excluding yourself)">
                   <Select name="numberOfTeamMembers" value={formData.numberOfTeamMembers} onChange={handleChange}>
                     <option value="0">Going alone</option>
-                    <option value="1">1 member</option>
                     <option value="2">2 members</option>
                     <option value="3">3 members</option>
                   </Select>
@@ -578,19 +683,91 @@ const StudentDashboard = () => {
                   </div>
 
                   {isOpen && (
-                    <div style={{ borderTop: '0.5px solid #F0EEF8', padding: '16px 20px' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px', marginBottom: 18 }}>
+                    <div style={{ borderTop: '0.5px solid #F0EEF8', padding: '20px 20px' }}>
+
+                      {/* ── Student Details ── */}
+                      <p style={{ margin: '0 0 10px', fontSize: 11, color: '#9895B5', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>Student Details</p>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px 24px', marginBottom: 20 }}>
                         {[
-                          ['Dates', req.startDate && req.endDate ? `${req.startDate} → ${req.endDate}` : '—'],
-                          ['Submitted', req.submittedAt || '—'],
+                          ['Name', req.studentName],
+                          ['Reg. No.', req.registrationNo],
+                          ['Email', req.email],
+                          ['Mobile', req.mobileNo],
+                          ['Campus', req.campus],
+                          ['Course', req.course || '—'],
+                          ['Year', req.year],
+                          ['Branch', req.branch],
+                          ['Attendance', req.cumulativeAttendance ? `${req.cumulativeAttendance}%` : '—'],
+                          ['Parent Mobile', req.parentMobileNo || '—'],
+                          ['Last Participation', req.lastParticipation || '—'],
                         ].map(([l, v]) => (
                           <div key={l}>
                             <p style={{ margin: '0 0 2px', fontSize: 11, color: '#9895B5', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>{l}</p>
-                            <p style={{ margin: 0, fontSize: 13, color: '#3C3A5E', fontWeight: 500 }}>{v}</p>
+                            <p style={{ margin: 0, fontSize: 13, color: '#3C3A5E', fontWeight: 500, wordBreak: 'break-all' }}>{v || '—'}</p>
                           </div>
                         ))}
                       </div>
 
+                      {/* ── Activity Details ── */}
+                      <p style={{ margin: '0 0 10px', fontSize: 11, color: '#9895B5', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>Activity Details</p>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px 24px', marginBottom: 20 }}>
+                        {[
+                          ['Activity', req.activityName],
+                          ['Institution', req.organizingInstitution],
+                          ['Type', req.activityType],
+                          ['From', req.fromDate ? new Date(req.fromDate).toLocaleDateString('en-IN') : '—'],
+                          ['To', req.toDate ? new Date(req.toDate).toLocaleDateString('en-IN') : '—'],
+                          ['Submitted On', req.createdAt ? new Date(req.createdAt).toLocaleDateString('en-IN') : '—'],
+                        ].map(([l, v]) => (
+                          <div key={l}>
+                            <p style={{ margin: '0 0 2px', fontSize: 11, color: '#9895B5', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>{l}</p>
+                            <p style={{ margin: 0, fontSize: 13, color: '#3C3A5E', fontWeight: 500 }}>{v || '—'}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* ── Team Members ── */}
+                      {req.teamMembers && req.teamMembers.length > 0 && (
+                        <>
+                          <p style={{ margin: '0 0 10px', fontSize: 11, color: '#9895B5', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>Team Members</p>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
+                            {req.teamMembers.map((m, mi) => (
+                              <div key={mi} style={{ display: 'flex', gap: 24, background: '#F7F6FD', borderRadius: 8, padding: '8px 14px', fontSize: 13 }}>
+                                <span style={{ fontWeight: 600, color: '#3C3489', minWidth: 70 }}>Member {mi + 1}</span>
+                                <span style={{ color: '#1A1640' }}>{m.name || '—'}</span>
+                                <span style={{ color: '#9895B5' }}>{m.registrationNo || '—'}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                      {/* ── Documents ── */}
+                      <p style={{ margin: '0 0 10px', fontSize: 11, color: '#9895B5', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>Documents</p>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 20 }}>
+                        {[
+                          ['Brochure', req.brochureLink],
+                          ['Photo', req.participantPhotoLink],
+                          ['Certificate', req.certificateLink],
+                        ].map(([label, url]) => (
+                          <a key={label} href={url} target="_blank" rel="noreferrer" style={{
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            padding: '9px 12px', borderRadius: 8,
+                            border: '0.5px solid #CECBF6', background: '#F7F6FD',
+                            color: '#3C3489', fontSize: 12.5, fontWeight: 600,
+                            textDecoration: 'none', transition: 'background 0.1s',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#EEEDFE'}
+                          onMouseLeave={e => e.currentTarget.style.background = '#F7F6FD'}>
+                            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                            </svg>
+                            {label}
+                          </a>
+                        ))}
+                      </div>
+
+                      {/* ── Approval Chain ── */}
                       <p style={{ margin: '0 0 10px', fontSize: 11, color: '#9895B5', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>Approval Chain</p>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         {[
@@ -684,13 +861,6 @@ const Field = ({ label, required, hint, children }) => (
   </div>
 );
 
-const baseInputStyle = {
-  width: '100%', padding: '9px 12px', borderRadius: 9, fontSize: 13.5,
-  border: '0.5px solid #D0CEF0', outline: 'none', background: 'white',
-  color: '#1A1640', transition: 'border-color 0.15s', boxSizing: 'border-box',
-  fontFamily: 'inherit',
-};
-
 const Input = ({ style, ...props }) => (
   <input
     {...props}
@@ -700,16 +870,7 @@ const Input = ({ style, ...props }) => (
   />
 );
 
-const Select = ({ children, ...props }) => (
-  <select
-    {...props}
-    style={{ ...baseInputStyle, appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239895B5' stroke-width='2'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: 32 }}
-    onFocus={e => e.target.style.borderColor = '#3C3489'}
-    onBlur={e => e.target.style.borderColor = '#D0CEF0'}
-  >
-    {children}
-  </select>
-);
+
 
 const FileUploadBox = ({ name, file, onChange, accept = ".pdf,image/*", uploading = false }) => (
   <label style={{
