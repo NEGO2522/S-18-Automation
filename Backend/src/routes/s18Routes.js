@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 const {
-  submitForm, getMyForms, getPendingForTutor,
+  submitForm, getMyForms, getTutorActed, getPendingForTutor,
   getPendingForHOD, getPendingForProctor,
   tutorAction, hodAction, proctorAction, getFormById
 } = require('../controllers/s18Controller');
@@ -12,6 +12,7 @@ router.post('/', protect, authorizeRoles('student'), submitForm);
 router.get('/my', protect, authorizeRoles('student'), getMyForms);
 
 // Tutor
+router.get('/tutor/acted', protect, authorizeRoles('tutor'), getTutorActed);
 router.get('/pending/tutor', protect, authorizeRoles('tutor'), getPendingForTutor);
 router.put('/:id/tutor', protect, authorizeRoles('tutor'), tutorAction);
 
