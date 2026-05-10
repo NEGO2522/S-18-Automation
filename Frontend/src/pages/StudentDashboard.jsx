@@ -18,6 +18,7 @@ const StudentDashboard = () => {
   const [formData, setFormData] = useState({
     studentName: user?.name || '',
     registrationNo: '',
+    course: '',
     campus: '',
     year: '',
     branch: '',
@@ -140,6 +141,7 @@ const StudentDashboard = () => {
       const payload = {
         studentName:          formData.studentName,
         registrationNo:       formData.registrationNo,
+        course:               formData.course,
         campus:               formData.campus,
         year:                 formData.year,
         branch:               formData.branch,
@@ -174,7 +176,7 @@ const StudentDashboard = () => {
       // Reset form
       setFormData(p => ({
         ...p,
-        registrationNo: '', campus: '', year: '', branch: '',
+        registrationNo: '', course: '', campus: '', year: '', branch: '',
         mobileNo: '', cumulativeAttendance: '', lastParticipation: '',
         activityName: '', organizingInstitution: '', activityType: '',
         startDate: '', endDate: '', numberOfTeamMembers: '0',
@@ -255,7 +257,7 @@ const StudentDashboard = () => {
                     <Input name="registrationNo" value={formData.registrationNo} onChange={handleChange} placeholder="e.g. 2021BTCS001" />
                   </Field>
                 </Grid>
-                <Grid cols={3}>
+                <Grid cols={2}>
                   <Field label="Campus" required>
                     <Select name="campus" value={formData.campus} onChange={handleChange}>
                       <option value="">Select campus</option>
@@ -264,6 +266,22 @@ const StudentDashboard = () => {
                       <option>PIIT</option>
                     </Select>
                   </Field>
+                  <Field label="Course" required>
+                    <Select name="course" value={formData.course} onChange={handleChange}>
+                      <option value="">Select course</option>
+                      <option>B.Tech</option>
+                      <option>BCA</option>
+                      <option>BVA</option>
+                      <option>BBA</option>
+                      <option>M.Tech</option>
+                      <option>MCA</option>
+                      <option>MBA</option>
+                      <option>B.Sc</option>
+                      <option>B.Com</option>
+                    </Select>
+                  </Field>
+                </Grid>
+                <Grid cols={2}>
                   <Field label="Year" required>
                     <Select name="year" value={formData.year} onChange={handleChange}>
                       <option value="">Select year</option>
