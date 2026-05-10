@@ -277,6 +277,14 @@ const TutorDashboard = () => {
                             <span className="font-medium text-gray-800">{form.email || '—'}</span>
                           </div>
                           <div>
+                            <span className="text-gray-400 text-xs uppercase tracking-wide block">Course / Branch</span>
+                            <span className="font-medium text-gray-800">{form.branch || '—'}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 text-xs uppercase tracking-wide block">Year</span>
+                            <span className="font-medium text-gray-800">{form.year || '—'}</span>
+                          </div>
+                          <div>
                             <span className="text-gray-400 text-xs uppercase tracking-wide block">Last Participation</span>
                             <span className="font-medium text-gray-800">{form.lastParticipation || 'None'}</span>
                           </div>
