@@ -12,8 +12,6 @@ const authRoutes = require('./src/routes/authRoutes');
 const s18Routes = require('./src/routes/s18Routes');
 const uploadRoutes = require('./src/routes/uploadRoutes');
 
-connectDB();
-
 const app = express();
 
 app.use(cors({ origin: process.env.CLIENT_URL }));
@@ -32,4 +30,16 @@ app.use('/api/s18', s18Routes);
 app.use('/api/upload', uploadRoutes);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+const startServer = async () => {
+  try {
+    await connectDB();
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  } catch (error) {
+    console.error('Server not started because MongoDB connection failed.');
+    console.error('Check your MongoDB Atlas Network Access IP whitelist and MONGO_URI.');
+    process.exit(1);
+  }
+};
+
+startServer();

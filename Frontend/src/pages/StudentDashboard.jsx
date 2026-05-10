@@ -183,10 +183,10 @@ const StudentDashboard = () => {
         [key]: { url: data.url, fileId: data.fileId, uploading: false },
       }));
       toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} uploaded!`);
-    } catch {
+    } catch (err) {
       setFormData(p => ({ ...p, [fieldName]: null }));
       setUploadedFiles(p => ({ ...p, [key]: { url: null, fileId: null, uploading: false } }));
-      toast.error(`${key} upload failed. Try again.`);
+      toast.error(err.response?.data?.message || `${key} upload failed. Try again.`);
     }
   };
 
