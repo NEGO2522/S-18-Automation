@@ -13,11 +13,13 @@ const StudentDashboard = () => {
   const [activeTab, setActiveTab] = useState('new');
   const [loading, setLoading] = useState(false);
   const [myRequests, setMyRequests] = useState([]);
+  const [requestsLoaded, setRequestsLoaded] = useState(false);
   const [expandedReq, setExpandedReq] = useState(null);
 
   const [formData, setFormData] = useState({
     studentName: user?.name || '',
     registrationNo: '',
+    course: '',
     campus: '',
     year: '',
     branch: '',
@@ -54,12 +56,18 @@ const StudentDashboard = () => {
     if (activeTab === 'my-requests') fetchMyRequests();
   }, [activeTab]);
 
+  useEffect(() => {
+    fetchMyRequests();
+  }, []);
+
   const fetchMyRequests = async () => {
     try {
       const { data } = await API.get('/s18/my');
       setMyRequests(data);
+      setRequestsLoaded(true);
     } catch {
       toast.error('Could not load your requests.');
+      setRequestsLoaded(true);
     }
   };
 
@@ -140,6 +148,7 @@ const StudentDashboard = () => {
       const payload = {
         studentName:          formData.studentName,
         registrationNo:       formData.registrationNo,
+        course:               formData.course,
         campus:               formData.campus,
         year:                 formData.year,
         branch:               formData.branch,
@@ -169,12 +178,13 @@ const StudentDashboard = () => {
       }
 
       toast.success('S18 Request submitted successfully!');
+      await fetchMyRequests();
       setActiveTab('my-requests');
 
       // Reset form
       setFormData(p => ({
         ...p,
-        registrationNo: '', campus: '', year: '', branch: '',
+        registrationNo: '', course: '', campus: '', year: '', branch: '',
         mobileNo: '', cumulativeAttendance: '', lastParticipation: '',
         activityName: '', organizingInstitution: '', activityType: '',
         startDate: '', endDate: '', numberOfTeamMembers: '0',
@@ -224,7 +234,7 @@ const StudentDashboard = () => {
             display: 'inline-flex', background: '#EEEDFE', borderRadius: 12,
             padding: 4, gap: 2
           }}>
-            {[['new', 'New Request'], ['my-requests', `My Requests (${myRequests.length})`]].map(([key, label]) => (
+            {[['new', 'New Request'], ['my-requests', requestsLoaded ? `My Requests (${myRequests.length})` : 'My Requests']].map(([key, label]) => (
               <button key={key} onClick={() => setActiveTab(key)} style={{
                 padding: '8px 20px', borderRadius: 9, border: 'none', cursor: 'pointer',
                 fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
@@ -255,7 +265,7 @@ const StudentDashboard = () => {
                     <Input name="registrationNo" value={formData.registrationNo} onChange={handleChange} placeholder="e.g. 2021BTCS001" />
                   </Field>
                 </Grid>
-                <Grid cols={3}>
+                <Grid cols={2}>
                   <Field label="Campus" required>
                     <Select name="campus" value={formData.campus} onChange={handleChange}>
                       <option value="">Select campus</option>
@@ -264,6 +274,22 @@ const StudentDashboard = () => {
                       <option>PIIT</option>
                     </Select>
                   </Field>
+                  <Field label="Course" required>
+                    <Select name="course" value={formData.course} onChange={handleChange}>
+                      <option value="">Select course</option>
+                      <option>B.Tech</option>
+                      <option>BCA</option>
+                      <option>BVA</option>
+                      <option>BBA</option>
+                      <option>M.Tech</option>
+                      <option>MCA</option>
+                      <option>MBA</option>
+                      <option>B.Sc</option>
+                      <option>B.Com</option>
+                    </Select>
+                  </Field>
+                </Grid>
+                <Grid cols={2}>
                   <Field label="Year" required>
                     <Select name="year" value={formData.year} onChange={handleChange}>
                       <option value="">Select year</option>
