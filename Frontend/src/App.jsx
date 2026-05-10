@@ -7,6 +7,7 @@ import StudentDashboard from './pages/StudentDashboard.jsx';
 import TutorDashboard from './pages/TutorDashboard.jsx';
 import HODDashboard from './pages/HODDashboard.jsx';
 import ProctorDashboard from './pages/ProctorDashboard.jsx';
+import PuamdinDashboard from './pages/PuamdinDashboard.jsx';
 
 function App() {
   return (
@@ -45,6 +46,10 @@ function App() {
             <ProctorDashboard />
           </ProtectedRoute>
         }
+      />
+      <Route
+        path="/dashboard/puamdin"
+        element={<PuamdinDashboard />}
       />
       <Route path="/" element={<Navigate to="/login" replace />} />
     </Routes>

@@ -26,6 +26,7 @@ const ProtectedRoute = ({ children, role }) => {
       tutor: '/dashboard/tutor',
       hod: '/dashboard/hod',
       chief_proctor: '/dashboard/proctor',
+      puamdin: '/dashboard/puamdin',
     };
     return <Navigate to={routes[user.role] || '/login'} replace />;
   }
