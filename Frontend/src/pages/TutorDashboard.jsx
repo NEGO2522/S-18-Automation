@@ -175,7 +175,7 @@ const TutorDashboard = () => {
                             {form.studentName}
                           </h3>
                           <p className="text-sm text-gray-500 mt-0.5">
-                            {form.registrationNo} • {form.branch} • {form.year}
+                            {form.registrationNo} • {form.course || '—'} • {form.branch} • {form.year}
                           </p>
                         </div>
                         <span className="bg-yellow-100 text-yellow-700 text-xs px-2.5 py-1 rounded-full font-semibold shrink-0">
@@ -278,7 +278,9 @@ const TutorDashboard = () => {
                           </div>
                           <div>
                             <span className="text-gray-400 text-xs uppercase tracking-wide block">Course / Branch</span>
-                            <span className="font-medium text-gray-800">{form.branch || '—'}</span>
+                            <span className="font-medium text-gray-800">
+                              {[form.course, form.branch].filter(Boolean).join(' / ') || '—'}
+                            </span>
                           </div>
                           <div>
                             <span className="text-gray-400 text-xs uppercase tracking-wide block">Year</span>
@@ -395,7 +397,9 @@ const TutorDashboard = () => {
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <h3 className="font-semibold text-gray-800">{item.studentName}</h3>
-                          <p className="text-sm text-gray-500">{item.registrationNo} • {item.activityName}</p>
+                          <p className="text-sm text-gray-500">
+                            {item.registrationNo} • {item.course || '—'} • {item.branch || '—'} • {item.activityName}
+                          </p>
                           {item.tutorApproval?.remarks && (
                             <p className="text-sm text-gray-400 mt-1 italic">"{item.tutorApproval.remarks}"</p>
                           )}
